@@ -1,57 +1,625 @@
-const CACHE_NAME = "soundboard-v5";
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#111827">
+  <link rel="manifest" href="./manifest.json">
+  <title>Mini Soundboard</title>
 
-const CORE_FILES = [
-  "./",
-  "./index.html",
-  "./manifest.json",
-  "./icon.svg"
-];
+  <style>
+    * { box-sizing: border-box; }
 
-self.addEventListener("install", (event) => {
-  self.skipWaiting();
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      min-width: 320px;
+      background: #111827;
+      color: white;
+      font-family: Arial, sans-serif;
+    }
 
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(CORE_FILES);
-    })
+    body {
+      max-width: 430px;
+      margin: auto;
+      padding: 10px;
+    }
+
+    .app {
+      background: #1f2937;
+      border: 1px solid #374151;
+      border-radius: 18px;
+      padding: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.4);
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .subtitle {
+      color: #9ca3af;
+      font-size: 11px;
+      margin-top: 3px;
+    }
+
+    button {
+      border: 0;
+      cursor: pointer;
+      color: white;
+      border-radius: 9px;
+    }
+
+    .add {
+      background: #2563eb;
+      padding: 8px 11px;
+      font-size: 13px;
+    }
+
+    .drop {
+      border: 2px dashed #4b5563;
+      border-radius: 12px;
+      padding: 14px;
+      text-align: center;
+      color: #cbd5e1;
+      font-size: 12px;
+      margin-bottom: 10px;
+      cursor: pointer;
+    }
+
+    .drop.over {
+      background: #263449;
+      border-color: #60a5fa;
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .controls input {
+      flex: 1;
+    }
+
+    .stop {
+      background: #991b1b;
+      padding: 8px 10px;
+    }
+
+    .sounds {
+      display: grid;
+      gap: 7px;
+      max-height: 430px;
+      overflow-y: auto;
+    }
+
+    .sound {
+      display: grid;
+      grid-template-columns: 1fr auto auto auto;
+      gap: 6px;
+      align-items: center;
+      background: #111827;
+      border-radius: 10px;
+      padding: 7px;
+    }
+
+    .play {
+      background: #2563eb;
+      padding: 9px;
+      text-align: left;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .shortcut {
+      background: #374151;
+      padding: 6px 8px;
+      min-width: 45px;
+      font-size: 11px;
+    }
+
+    .edit {
+      background: #374151;
+      padding: 7px;
+    }
+
+    .delete {
+      background: #7f1d1d;
+      padding: 7px;
+    }
+
+    .edit-area {
+      display: none;
+      grid-column: 1 / -1;
+      gap: 5px;
+    }
+
+    .sound.editing .edit-area {
+      display: flex;
+    }
+
+    .edit-area input {
+      min-width: 0;
+      flex: 1;
+      background: #111827;
+      border: 1px solid #4b5563;
+      color: white;
+      border-radius: 7px;
+      padding: 7px;
+    }
+
+    .empty {
+      text-align: center;
+      color: #9ca3af;
+      padding: 20px;
+      font-size: 13px;
+    }
+
+    footer {
+      text-align: center;
+      color: #6b7280;
+      font-size: 10px;
+      margin-top: 9px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="app">
+
+  <header>
+    <div>
+      <h1>🎵 Soundboard</h1>
+      <div class="subtitle">Petite fenêtre • raccourcis configurables</div>
+    </div>
+
+    <button class="add" id="addButton">＋ Son</button>
+  </header>
+
+  <div class="drop" id="dropZone">
+    🎵 Glisse tes fichiers audio ici<br>
+    ou clique pour les choisir
+  </div>
+
+  <input id="fileInput" type="file" accept="audio/*" multiple hidden>
+
+  <div class="controls">
+    <span>🔊</span>
+    <input id="volume" type="range" min="0" max="1" step="0.01" value="0.8">
+    <button class="stop" id="stopButton">■ Stop</button>
+  </div>
+
+  <div class="sounds" id="sounds"></div>
+
+  <footer>Échap = arrêter tous les sons</footer>
+
+</div>
+
+<script>
+
+const DATABASE_NAME = "MiniSoundboard";
+const STORE_NAME = "sounds";
+
+let database;
+let volume = 0.8;
+let playingSounds = new Set();
+let shortcutCapture = null;
+
+function openDatabase() {
+
+  return new Promise((resolve, reject) => {
+
+    const request = indexedDB.open(DATABASE_NAME, 2);
+
+    request.onupgradeneeded = function() {
+
+      const db = request.result;
+
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME, {
+          keyPath: "id",
+          autoIncrement: true
+        });
+      }
+
+    };
+
+    request.onsuccess = function() {
+      database = request.result;
+      resolve();
+    };
+
+    request.onerror = function() {
+      reject(request.error);
+    };
+
+  });
+
+}
+
+function getSounds() {
+
+  return new Promise((resolve, reject) => {
+
+    const transaction =
+      database.transaction(STORE_NAME, "readonly");
+
+    const store =
+      transaction.objectStore(STORE_NAME);
+
+    const request = store.getAll();
+
+    request.onsuccess = () => resolve(request.result);
+
+    request.onerror = () => reject(request.error);
+
+  });
+
+}
+
+function saveSound(sound) {
+
+  return new Promise((resolve, reject) => {
+
+    const transaction =
+      database.transaction(STORE_NAME, "readwrite");
+
+    const store =
+      transaction.objectStore(STORE_NAME);
+
+    const request = store.put(sound);
+
+    request.onsuccess = resolve;
+
+    request.onerror = () => reject(request.error);
+
+  });
+
+}
+
+function deleteSound(id) {
+
+  const transaction =
+    database.transaction(STORE_NAME, "readwrite");
+
+  transaction.objectStore(STORE_NAME).delete(id);
+
+  renderSounds();
+
+}
+
+function normalizeKey(event) {
+
+  return {
+    key: event.key.toLowerCase(),
+    ctrl: event.ctrlKey,
+    alt: event.altKey,
+    shift: event.shiftKey,
+    meta: event.metaKey
+  };
+
+}
+
+function shortcutText(shortcut) {
+
+  if (!shortcut) return "—";
+
+  const parts = [];
+
+  if (shortcut.ctrl) parts.push("Ctrl");
+  if (shortcut.alt) parts.push("Alt");
+  if (shortcut.shift) parts.push("Shift");
+  if (shortcut.meta) parts.push("⌘");
+
+  parts.push(shortcut.key);
+
+  return parts.join("+");
+
+}
+
+function sameShortcut(a, b) {
+
+  if (!a || !b) return false;
+
+  return (
+    a.key === b.key &&
+    a.ctrl === b.ctrl &&
+    a.alt === b.alt &&
+    a.shift === b.shift &&
+    a.meta === b.meta
   );
-});
 
-self.addEventListener("activate", (event) => {
-  event.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys
-          .filter((key) => key !== CACHE_NAME)
-          .map((key) => caches.delete(key))
-      );
-    }).then(() => self.clients.claim())
-  );
-});
+}
 
-self.addEventListener("fetch", (event) => {
-  if (event.request.method !== "GET") {
-    return;
+function playSound(sound) {
+
+  const url = URL.createObjectURL(sound.blob);
+
+  const audio = new Audio(url);
+
+  audio.volume = volume;
+
+  playingSounds.add(audio);
+
+  audio.onended = function() {
+
+    playingSounds.delete(audio);
+
+    URL.revokeObjectURL(url);
+
+  };
+
+  audio.play();
+
+}
+
+async function addFiles(files) {
+
+  for (const file of files) {
+
+    if (!file.type.startsWith("audio/")) continue;
+
+    const name =
+      file.name.replace(/\.[^/.]+$/, "");
+
+    await saveSound({
+      name: name,
+      blob: file,
+      shortcut: null
+    });
+
   }
 
-  event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        if (
-          response.ok &&
-          new URL(event.request.url).origin === self.location.origin
-        ) {
-          const copy = response.clone();
+  renderSounds();
 
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, copy);
-          });
-        }
+}
 
-        return response;
-      })
-      .catch(() => {
-        return caches.match(event.request);
-      })
-  );
+async function renderSounds() {
+
+  const container =
+    document.getElementById("sounds");
+
+  const sounds =
+    await getSounds();
+
+  container.innerHTML = "";
+
+  if (sounds.length === 0) {
+
+    container.innerHTML =
+      '<div class="empty">Aucun son pour le moment.</div>';
+
+    return;
+
+  }
+
+  for (const sound of sounds) {
+
+    const row =
+      document.createElement("div");
+
+    row.className = "sound";
+
+    const play =
+      document.createElement("button");
+
+    play.className = "play";
+
+    play.textContent = "▶ " + sound.name;
+
+    play.onclick = () => playSound(sound);
+
+    const shortcut =
+      document.createElement("button");
+
+    shortcut.className = "shortcut";
+
+    shortcut.textContent =
+      shortcutText(sound.shortcut);
+
+    shortcut.onclick = () => {
+
+      shortcutCapture = sound.id;
+
+      shortcut.textContent = "Appuie…";
+
+    };
+
+    const edit =
+      document.createElement("button");
+
+    edit.className = "edit";
+
+    edit.textContent = "✎";
+
+    edit.onclick = () =>
+      row.classList.toggle("editing");
+
+    const remove =
+      document.createElement("button");
+
+    remove.className = "delete";
+
+    remove.textContent = "×";
+
+    remove.onclick = () =>
+      deleteSound(sound.id);
+
+    const editArea =
+      document.createElement("div");
+
+    editArea.className = "edit-area";
+
+    const nameInput =
+      document.createElement("input");
+
+    nameInput.value = sound.name;
+
+    const save =
+      document.createElement("button");
+
+    save.className = "edit";
+
+    save.textContent = "OK";
+
+    save.onclick = async () => {
+
+      sound.name =
+        nameInput.value.trim() || "Son";
+
+      await saveSound(sound);
+
+      renderSounds();
+
+    };
+
+    editArea.append(nameInput, save);
+
+    row.append(
+      play,
+      shortcut,
+      edit,
+      remove,
+      editArea
+    );
+
+    container.appendChild(row);
+
+  }
+
+}
+
+document.getElementById("addButton").onclick =
+  () => document.getElementById("fileInput").click();
+
+document.getElementById("fileInput").onchange =
+  e => addFiles(e.target.files);
+
+document.getElementById("volume").oninput =
+  e => volume = Number(e.target.value);
+
+document.getElementById("stopButton").onclick =
+  () => {
+
+    for (const audio of playingSounds) {
+
+      audio.pause();
+      audio.currentTime = 0;
+
+    }
+
+  };
+
+const dropZone =
+  document.getElementById("dropZone");
+
+dropZone.onclick =
+  () => document.getElementById("fileInput").click();
+
+dropZone.ondragover =
+  e => {
+
+    e.preventDefault();
+
+    dropZone.classList.add("over");
+
+  };
+
+dropZone.ondragleave =
+  () => dropZone.classList.remove("over");
+
+dropZone.ondrop =
+  e => {
+
+    e.preventDefault();
+
+    dropZone.classList.remove("over");
+
+    addFiles(e.dataTransfer.files);
+
+  };
+
+document.addEventListener("keydown", async function(event) {
+
+  if (event.key === "Escape") {
+
+    document.getElementById("stopButton").click();
+
+    return;
+
+  }
+
+  if (shortcutCapture !== null) {
+
+    event.preventDefault();
+
+    const sounds =
+      await getSounds();
+
+    const sound =
+      sounds.find(s => s.id === shortcutCapture);
+
+    if (sound) {
+
+      sound.shortcut =
+        normalizeKey(event);
+
+      await saveSound(sound);
+
+    }
+
+    shortcutCapture = null;
+
+    renderSounds();
+
+    return;
+
+  }
+
+  const pressed =
+    normalizeKey(event);
+
+  const sounds =
+    await getSounds();
+
+  const sound =
+    sounds.find(s =>
+      sameShortcut(s.shortcut, pressed)
+    );
+
+  if (sound) {
+
+    event.preventDefault();
+
+    playSound(sound);
+
+  }
+
 });
+
+openDatabase().then(renderSounds);
+
+if ("serviceWorker" in navigator) {
+
+  navigator.serviceWorker.register("./sw.js");
+
+}
+
+</script>
+
+</body>
+</html>
