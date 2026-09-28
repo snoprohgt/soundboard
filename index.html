@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#111827">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<title>Mini Soundboard</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1020;--panel:#121a2b;--card:#182238;--text:#f7f8fb;--muted:#9aa7bd;--line:#2b3852;--accent:#7c5cff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:14px system-ui,-apple-system,Segoe UI,sans-serif}
+main{max-width:920px;margin:auto;padding:18px}
+header{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:14px}
+h1{font-size:21px;margin:0}.sub{color:var(--muted);font-size:12px;margin-top:3px}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+button,label.btn{font:inherit;border:1px solid var(--line);background:var(--panel);color:var(--text);padding:10px 13px;border-radius:11px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:7px}
+button:hover,label.btn:hover{border-color:#53678e}button.primary,label.primary{background:var(--accent);border-color:var(--accent)}
+input[type=file]{display:none}
+#dropzone{border:2px dashed var(--line);border-radius:16px;padding:24px 16px;text-align:center;color:var(--muted);margin-bottom:14px;transition:.15s}
+#dropzone strong{display:block;color:var(--text);font-size:15px;margin-bottom:5px}
+#dropzone.dragover{border-color:var(--accent);background:rgba(124,92,255,.12);color:var(--text);transform:scale(1.005)}
+#grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
+.sound{position:relative;min-height:92px;border:1px solid var(--line);border-radius:15px;background:var(--card);padding:13px;cursor:pointer;text-align:left;color:var(--text)}
+.sound:hover{border-color:#53678e}.sound.playing{outline:2px solid var(--accent);background:#201b42}
+.sound .title{font-weight:700;padding-right:25px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}
+.sound .meta{font-size:11px;color:var(--muted);margin-top:7px;display:block}
+.sound .del{position:absolute;right:8px;top:7px;border:0;background:transparent;color:var(--muted);padding:4px;font-size:16px}
+.empty{grid-column:1/-1;border:1px dashed var(--line);border-radius:15px;padding:35px;text-align:center;color:var(--muted)}
+.bottom{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:15px;flex-wrap:wrap}
+#status{color:var(--muted);font-size:12px}.volume{display:flex;align-items:center;gap:8px}.volume input{width:130px}
+.note{margin-top:18px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;color:var(--muted);font-size:12px;line-height:1.45}
+@media(max-width:500px){main{padding:12px}#grid{grid-template-columns:repeat(2,minmax(0,1fr))}.sound{min-height:82px}}
+</style>
+</head>
+<body>
+<main id="app">
+<header>
+<div><h1>🎛️ Mini Soundboard</h1><div class="sub">Glisse tes sons ici ou utilise le bouton Ajouter.</div></div>
+<div class="actions">
+<label class="btn primary" for="files">＋ Ajouter des sons</label>
+<input id="files" type="file" accept="audio/*" multiple>
+<button id="stop" type="button">■ Stop</button>
+<button id="clear" type="button">Tout supprimer</button>
+</div>
+</header>
+
+<section id="dropzone" tabindex="0" aria-label="Zone de dépôt de fichiers audio">
+<strong>🎵 Glisse-dépose tes fichiers audio ici</strong>
+Dépose un ou plusieurs MP3, WAV, OGG, M4A, etc.
+</section>
+
+<section id="grid" aria-live="polite"></section>
+<div class="bottom">
+<div id="status">Chargement…</div>
+<div class="volume">🔊 <input id="volume" type="range" min="0" max="1" step="0.01" value="1" aria-label="Volume"></div>
+</div>
+<div class="note">
+<strong>Astuce :</strong> les fichiers sont conservés localement sur ton Chromebook. Tu peux donc fermer puis rouvrir l'application sans devoir réimporter tes sons.
+</div>
+</main>
+
+<script>
+const DB='mini-soundboard-db', STORE='sounds';
+let db, sounds=[], current=null, volume=1;
+const $=id=>document.getElementById(id);
+
+function openDB(){return new Promise((resolve,reject)=>{
+ const r=indexedDB.open(DB,1);
+ r.onupgradeneeded=()=>r.result.createObjectStore(STORE,{keyPath:'id',autoIncrement:true});
+ r.onsuccess=()=>{db=r.result;resolve()}; r.onerror=()=>reject(r.error);
+})}
+function allSounds(){return new Promise((resolve,reject)=>{
+ const r=db.transaction(STORE,'readonly').objectStore(STORE).getAll();
+ r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);
+})}
+function addSound(s){return new Promise((resolve,reject)=>{
+ const r=db.transaction(STORE,'readwrite').objectStore(STORE).add(s);
+ r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);
+})}
+function deleteSound(id){return new Promise((resolve,reject)=>{
+ const r=db.transaction(STORE,'readwrite').objectStore(STORE).delete(id);
+ r.onsuccess=()=>resolve();r.onerror=()=>reject(r.error);
+})}
+function clearDB(){return new Promise((resolve,reject)=>{
+ const r=db.transaction(STORE,'readwrite').objectStore(STORE).clear();
+ r.onsuccess=()=>resolve();r.onerror=()=>reject(r.error);
+})}
+function fmt(bytes){if(bytes<1024)return bytes+' o';let n=bytes/1024;if(n<1024)return n.toFixed(0)+' Ko';return (n/1024).toFixed(1)+' Mo'}
+
+function render(){
+ const grid=$('grid');grid.innerHTML='';
+ if(!sounds.length)grid.innerHTML='<div class="empty">Aucun son pour le moment.<br><br>Glisse des fichiers audio dans la zone ci-dessus.</div>';
+ sounds.forEach(s=>{
+  const b=document.createElement('button');b.className='sound';b.type='button';b.dataset.id=s.id;
+  const title=document.createElement('span');title.className='title';title.textContent=s.name;
+  const meta=document.createElement('span');meta.className='meta';meta.textContent=fmt(s.size)+' · Cliquer pour jouer';
+  const del=document.createElement('button');del.className='del';del.title='Supprimer';del.type='button';del.textContent='×';
+  b.append(title,meta,del);
+  b.addEventListener('click',()=>play(s,b));
+  del.addEventListener('click',async e=>{
+   e.stopPropagation();
+   if(current?.id===s.id){current.audio.pause();URL.revokeObjectURL(current.url);current=null}
+   await deleteSound(s.id);sounds=await allSounds();render();
+  });
+  grid.appendChild(b);
+ });
+ $('status').textContent=sounds.length?`${sounds.length} son${sounds.length>1?'s':''} chargé${sounds.length>1?'s':''}.`:'Aucun son chargé.';
+}
+
+function play(s,b){
+ if(current?.audio){current.audio.pause();current.audio.currentTime=0;URL.revokeObjectURL(current.url)}
+ document.querySelectorAll('.sound').forEach(x=>x.classList.remove('playing'));
+ const url=URL.createObjectURL(s.blob), audio=new Audio(url);audio.volume=volume;
+ current={id:s.id,audio,url};
+ audio.onended=()=>{b.classList.remove('playing');URL.revokeObjectURL(url);current=null};
+ audio.onerror=()=>{$('status').textContent='Ce fichier ne peut pas être lu par Chrome.'};
+ audio.play().then(()=>{b.classList.add('playing');$('status').textContent='Lecture : '+s.name})
+ .catch(()=>{$('status').textContent='Lecture bloquée par le navigateur.'});
+}
+
+async function importFiles(fileList){
+ const files=Array.from(fileList||[]);
+ let added=0;
+ for(const f of files){
+  if(!f.type.startsWith('audio/'))continue;
+  await addSound({name:f.name.replace(/\.[^.]+$/,''),size:f.size,type:f.type,blob:f});
+  added++;
+ }
+ if(added){sounds=await allSounds();render();$('status').textContent=`${added} son${added>1?'s':''} ajouté${added>1?'s':''}.`}
+}
+
+$('files').addEventListener('change',async e=>{await importFiles(e.target.files);e.target.value=''});
+
+const drop=$('dropzone');
+['dragenter','dragover'].forEach(type=>drop.addEventListener(type,e=>{
+ e.preventDefault();e.stopPropagation();drop.classList.add('dragover');
+}));
+['dragleave','drop'].forEach(type=>drop.addEventListener(type,e=>{
+ e.preventDefault();e.stopPropagation();drop.classList.remove('dragover');
+}));
+drop.addEventListener('drop',async e=>{await importFiles(e.dataTransfer.files)});
+drop.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('files').click()}});
+
+$('stop').addEventListener('click',()=>{
+ if(current?.audio){current.audio.pause();current.audio.currentTime=0;URL.revokeObjectURL(current.url);current=null}
+ document.querySelectorAll('.sound').forEach(x=>x.classList.remove('playing'));
+ $('status').textContent='Lecture arrêtée.';
+});
+$('clear').addEventListener('click',async()=>{
+ if(!sounds.length)return;
+ if(confirm('Supprimer tous les sons de cet appareil ?')){
+  if(current?.audio)current.audio.pause();current=null;
+  await clearDB();sounds=[];render();
+ }
+});
+$('volume').addEventListener('input',e=>{volume=Number(e.target.value);if(current?.audio)current.audio.volume=volume});
+
+(async()=>{
+ try{
+  await openDB();sounds=await allSounds();render();
+  if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');
+ }catch(e){$('status').textContent='Erreur de stockage local.'}
+})();
+</script>
+</body>
+</html>
