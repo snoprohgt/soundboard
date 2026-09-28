@@ -1,68 +1,57 @@
-<!doctype html>
-<html lang="fr">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#111827">
-<link rel="manifest" href="./manifest.json">
-<title>Mini Soundboard</title>
-<style>
-*{box-sizing:border-box}html,body{margin:0;background:#111827;color:#f9fafb;font-family:Arial,sans-serif}
-body{width:100%;max-width:430px;margin:auto;padding:12px}
-.app{background:#1f2937;border:1px solid #374151;border-radius:18px;padding:14px;box-shadow:0 12px 35px #0008}
-header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
-h1{font-size:18px;margin:0}.sub{font-size:11px;color:#9ca3af;margin:3px 0 0}
-button,input{font:inherit}.btn{border:0;border-radius:10px;padding:8px 10px;cursor:pointer;background:#374151;color:white}
-.btn:hover{background:#4b5563}.danger{background:#7f1d1d}.drop{border:2px dashed #4b5563;border-radius:12px;padding:14px;text-align:center;color:#cbd5e1;font-size:13px;margin-bottom:10px}
-.drop.over{background:#263449;border-color:#9ca3af}.controls{display:flex;align-items:center;gap:8px;margin-bottom:10px;font-size:12px}.controls input{width:100%}
-.sounds{display:grid;gap:7px;max-height:430px;overflow:auto}
-.sound{display:grid;grid-template-columns:1fr auto auto;gap:6px;align-items:center;background:#111827;border-radius:11px;padding:7px}
-.play{min-width:0;text-align:left;border:0;background:#2563eb;color:#fff;border-radius:9px;padding:9px;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.key{font-size:11px;color:#d1d5db;background:#374151;border-radius:7px;padding:6px 8px;min-width:42px;text-align:center}
-.small{border:0;background:#374151;color:#fff;border-radius:8px;padding:7px;cursor:pointer}
-.empty{color:#9ca3af;text-align:center;padding:20px;font-size:13px}
-.edit{display:none;margin-top:5px;grid-column:1/-1;gap:5px}.sound.editing .edit{display:flex}.edit input{min-width:0;flex:1;background:#111827;color:#fff;border:1px solid #4b5563;border-radius:7px;padding:7px}
-footer{margin-top:9px;font-size:10px;color:#6b7280;text-align:center}
-</style>
-</head>
-<body>
-<div class="app">
-<header><div><h1>🎵 Mini Soundboard</h1><div class="sub">Fenêtre compacte • raccourcis configurables</div></div><button class="btn" id="add">＋ Son</button></header>
-<div class="drop" id="drop">Glisse tes fichiers audio ici<br>ou clique pour les choisir</div>
-<input id="files" type="file" accept="audio/*" multiple hidden>
-<div class="controls"><span>🔊</span><input id="vol" type="range" min="0" max="1" step=".01" value=".8"><button class="btn danger" id="stop">■ Stop</button></div>
-<div class="sounds" id="sounds"></div>
-<footer>Échap = arrêter • Sons sauvegardés dans ce navigateur</footer>
-</div>
-<script>
-const DB='MiniSoundboardDB', STORE='sounds'; let db, volume=.8, audios=new Set(), captureId=null;
-const $=id=>document.getElementById(id);
-function openDB(){return new Promise((res,rej)=>{const r=indexedDB.open(DB,2);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains(STORE))r.result.createObjectStore(STORE,{keyPath:'id',autoIncrement:true})};r.onsuccess=()=>{db=r.result;res()};r.onerror=()=>rej(r.error)})}
-function all(){return new Promise((res,rej)=>{const r=db.transaction(STORE).objectStore(STORE).getAll();r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
-function put(x){return new Promise((res,rej)=>{const r=db.transaction(STORE,'readwrite').objectStore(STORE).put(x);r.onsuccess=()=>res();r.onerror=()=>rej(r.error)})}
-function del(id){db.transaction(STORE,'readwrite').objectStore(STORE).delete(id);render()}
-function label(k){if(!k)return'—';return [k.ctrl?'Ctrl':null,k.alt?'Alt':null,k.shift?'Shift':null,k.meta?'⌘':null,k.key].filter(Boolean).join('+')}
-function norm(e){return {key:e.key.toLowerCase(),ctrl:e.ctrlKey,alt:e.altKey,shift:e.shiftKey,meta:e.metaKey}}
-function same(a,b){return a&&b&&a.key===b.key&&a.ctrl===b.ctrl&&a.alt===b.alt&&a.shift===b.shift&&a.meta===b.meta}
-async function render(){const arr=await all(), root=$('sounds');root.innerHTML='';if(!arr.length){root.innerHTML='<div class="empty">Aucun son pour le moment.</div>';return}
-arr.forEach(s=>{const row=document.createElement('div');row.className='sound';row.dataset.id=s.id;
-const play=document.createElement('button');play.className='play';play.textContent='▶ '+s.name;play.onclick=()=>playSound(s);
-const key=document.createElement('div');key.className='key';key.textContent=label(s.key);
-const edit=document.createElement('button');edit.className='small';edit.textContent='✎';edit.onclick=()=>{row.classList.toggle('editing');name.value=s.name;};
-const ed=document.createElement('div');ed.className='edit';
-const name=document.createElement('input');name.value=s.name;
-const shortcut=document.createElement('button');shortcut.className='small';shortcut.textContent='Raccourci';shortcut.onclick=()=>{captureId=s.id;shortcut.textContent='Appuie…'};
-const save=document.createElement('button');save.className='small';save.textContent='OK';save.onclick=async()=>{s.name=name.value.trim()||'Son';await put(s);row.classList.remove('editing');render()};
-const remove=document.createElement('button');remove.className='small danger';remove.textContent='×';remove.onclick=()=>del(s.id);
-ed.append(name,shortcut,save);
-row.append(play,key,edit,ed,remove);root.append(row)})}
-async function playSound(s){const a=new Audio(URL.createObjectURL(s.blob));a.volume=volume;audios.add(a);a.onended=()=>{audios.delete(a);URL.revokeObjectURL(a.src)};a.play()}
-async function addFiles(fs){for(const f of fs){if(!f.type.startsWith('audio/'))continue;await put({name:f.name.replace(/\.[^.]+$/,''),blob:f,key:null})}render()}
-$('add').onclick=()=>$('files').click();$('drop').onclick=()=>$('files').click();$('files').onchange=e=>addFiles(e.target.files);
-$('drop').ondragover=e=>{e.preventDefault();$('drop').classList.add('over')};$('drop').ondragleave=()=>$('drop').classList.remove('over');$('drop').ondrop=e=>{e.preventDefault();$('drop').classList.remove('over');addFiles(e.dataTransfer.files)};
-$('vol').oninput=e=>volume=+e.target.value;$('stop').onclick=()=>audios.forEach(a=>{a.pause();a.currentTime=0});document.addEventListener('keydown',async e=>{if(e.key==='Escape'){$('stop').click();return}if(!captureId)return;e.preventDefault();const s=(await all()).find(x=>x.id===captureId);if(s){s.key=norm(e);await put(s);captureId=null;render()}});
-document.addEventListener('keydown',async e=>{if(captureId)return;const k=norm(e),arr=await all(),s=arr.find(x=>same(x.key,k));if(s){e.preventDefault();playSound(s)}});
-openDB().then(render);
-if('serviceWorker'in navigator)navigator.serviceWorker.register('./sw.js');
-</script>
-</body></html>
+const CACHE_NAME = "soundboard-v5";
+
+const CORE_FILES = [
+  "./",
+  "./index.html",
+  "./manifest.json",
+  "./icon.svg"
+];
+
+self.addEventListener("install", (event) => {
+  self.skipWaiting();
+
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(CORE_FILES);
+    })
+  );
+});
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) => {
+      return Promise.all(
+        keys
+          .filter((key) => key !== CACHE_NAME)
+          .map((key) => caches.delete(key))
+      );
+    }).then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener("fetch", (event) => {
+  if (event.request.method !== "GET") {
+    return;
+  }
+
+  event.respondWith(
+    fetch(event.request)
+      .then((response) => {
+        if (
+          response.ok &&
+          new URL(event.request.url).origin === self.location.origin
+        ) {
+          const copy = response.clone();
+
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, copy);
+          });
+        }
+
+        return response;
+      })
+      .catch(() => {
+        return caches.match(event.request);
+      })
+  );
+});
