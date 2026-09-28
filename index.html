@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="fr"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#111827"><link rel="manifest" href="manifest.json"><title>Mini Soundboard</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:transparent;color:#f9fafb}
+.app{position:fixed;right:14px;bottom:14px;width:min(430px,calc(100vw - 28px));max-height:calc(100vh - 28px);overflow:auto;background:rgba(17,24,39,.98);border:1px solid #4b5563;border-radius:18px;box-shadow:0 18px 50px #0008}
+.top{position:sticky;top:0;z-index:3;display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid #374151;background:#111827}
+.title{font-weight:800;font-size:14px}.sub{font-size:11px;color:#9ca3af}.actions{display:flex;gap:6px}.icon{border:0;background:#374151;color:#fff;border-radius:9px;width:32px;height:32px;cursor:pointer}
+.body{padding:12px}.drop{border:1px dashed #6b7280;border-radius:12px;padding:10px;text-align:center;font-size:12px;color:#d1d5db;cursor:pointer;margin-bottom:10px}.drop.over{background:#172554;border-color:#60a5fa}.drop input{display:none}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:7px}.sound{position:relative;min-height:74px;padding:9px 9px 25px;border:1px solid #4b5563;background:#263244;border-radius:12px;color:#fff;text-align:left;cursor:pointer}.sound:hover{background:#334155;border-color:#60a5fa}.sound.playing{outline:2px solid #60a5fa}.name{display:block;font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:42px}.shortcut{position:absolute;right:7px;top:7px;font-size:10px;background:#111827;border:1px solid #4b5563;border-radius:5px;padding:3px 5px;color:#dbeafe;max-width:90px;overflow:hidden;text-overflow:ellipsis}.edit{position:absolute;left:7px;bottom:5px;border:0;background:transparent;color:#93c5fd;font-size:10px;cursor:pointer}.del{position:absolute;right:7px;bottom:5px;border:0;background:transparent;color:#9ca3af;font-size:10px;cursor:pointer}
+.empty{text-align:center;color:#9ca3af;font-size:12px;padding:20px}.footer{display:flex;gap:8px;align-items:center;margin-top:10px}.footer button{border:0;background:#374151;color:#fff;border-radius:9px;padding:8px 10px;font-size:11px;cursor:pointer}.volume{flex:1}.volume input{width:100%}.help{text-align:center;color:#9ca3af;font-size:10px;margin-top:8px}
+.modal{position:fixed;inset:0;background:#0009;display:none;align-items:center;justify-content:center;z-index:10}.modal.show{display:flex}.box{width:min(360px,calc(100vw - 30px));background:#1f2937;border:1px solid #4b5563;border-radius:16px;padding:16px;box-shadow:0 20px 60px #000b}.box h3{margin:0 0 5px;font-size:15px}.box p{margin:0 0 14px;color:#9ca3af;font-size:11px}.field{margin-bottom:10px}.field label{display:block;font-size:11px;color:#d1d5db;margin-bottom:5px}.field input{width:100%;padding:9px;border-radius:9px;border:1px solid #4b5563;background:#111827;color:#fff}.capture{outline:2px solid #60a5fa}.row{display:flex;gap:7px}.row button{flex:1;padding:9px;border:0;border-radius:9px;background:#374151;color:#fff;cursor:pointer}.row .save{background:#2563eb}.note{font-size:10px;color:#9ca3af;margin-top:8px}
+</style></head><body>
+<div class="app">
+<div class="top"><div><div class="title">🔊 Mini Soundboard</div><div class="sub" id="count">0 son</div></div><div class="actions"><button class="icon" id="stop">■</button><button class="icon" id="add">＋</button></div></div>
+<div class="body">
+<label class="drop" id="drop">Dépose tes sons ici<br><small>ou clique pour sélectionner</small><input id="files" type="file" accept="audio/*" multiple></label>
+<div class="grid" id="grid"></div><div class="empty" id="empty">Ajoute des sons pour commencer.</div>
+<div class="footer"><button id="clear">Tout supprimer</button><div class="volume">🔈 <input id="vol" type="range" min="0" max="1" step=".01" value=".8"></div></div>
+<div class="help">Clique un son ou utilise son raccourci clavier. Échap = arrêter.</div>
+</div></div>
+
+<div class="modal" id="modal"><div class="box">
+<h3>Configurer le son</h3><p id="editName"></p>
+<div class="field"><label>Nom du son</label><input id="nameInput"></div>
+<div class="field"><label>Raccourci clavier</label><input id="keyInput" placeholder="Ex. F1, F2, Ctrl+1, Alt+Q..." readonly></div>
+<div class="row"><button id="cancel">Annuler</button><button class="save" id="save">Enregistrer</button></div>
+<div class="note">Clique dans le champ raccourci puis appuie sur la combinaison souhaitée.</div>
+</div></div>
+
+<script>
+const DB='MiniSoundboardDB',STORE='sounds';let db,sounds=[],audios=new Map(),volume=.8,editing=null;
+const openDB=()=>new Promise((res,rej)=>{let r=indexedDB.open(DB,2);r.onupgradeneeded=()=>{let s=r.result.objectStoreNames.contains(STORE)?r.result.objectStore(STORE):r.result.createObjectStore(STORE,{keyPath:'id'});if(!s.indexNames.contains('dummy')){}};r.onsuccess=()=>{db=r.result;res()};r.onerror=()=>rej(r.error)});
+const all=()=>new Promise((res,rej)=>{let r=db.transaction(STORE,'readonly').objectStore(STORE).getAll();r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
+const put=x=>new Promise((res,rej)=>{let r=db.transaction(STORE,'readwrite').objectStore(STORE).put(x);r.onsuccess=()=>res();r.onerror=()=>rej(r.error)});
+const del=id=>new Promise((res,rej)=>{let r=db.transaction(STORE,'readwrite').objectStore(STORE).delete(id);r.onsuccess=()=>res();r.onerror=()=>rej(r.error)});
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function addFiles(list){for(const f of list)if(f.type.startsWith('audio/'))await put({id:crypto.randomUUID(),name:f.name,blob:f,key:''});await refresh()}
+async function refresh(){sounds=await all();document.querySelector('#count').textContent=`${sounds.length} son${sounds.length>1?'s':''}`;render()}
+function render(){let g=document.querySelector('#grid');g.innerHTML='';document.querySelector('#empty').style.display=sounds.length?'none':'block';sounds.forEach(s=>{let b=document.createElement('button');b.className='sound';b.dataset.id=s.id;b.innerHTML=`<span class="shortcut">${esc(s.key||'Aucun')}</span><span class="name">${esc(s.name)}</span><button class="edit">✎ raccourci</button><button class="del">✕</button>`;b.onclick=e=>{if(e.target.classList.contains('edit')){e.stopPropagation();openEditor(s)}else if(e.target.classList.contains('del')){e.stopPropagation();remove(s.id)}else play(s,b)};g.appendChild(b)})}
+function play(s,b){let old=audios.get(s.id);if(old){old.pause();old.currentTime=0}let a=new Audio(URL.createObjectURL(s.blob));a.volume=volume;audios.set(s.id,a);b.classList.add('playing');a.onended=()=>b.classList.remove('playing');a.play()}
+function stop(){audios.forEach(a=>{a.pause();a.currentTime=0});audios.clear();document.querySelectorAll('.playing').forEach(x=>x.classList.remove('playing'))}
+async function remove(id){let a=audios.get(id);if(a)a.pause();await del(id);refresh()}
+function keyText(e){let parts=[];if(e.ctrlKey)parts.push('Ctrl');if(e.altKey)parts.push('Alt');if(e.shiftKey)parts.push('Shift');if(e.metaKey)parts.push('Meta');let k=e.key;if(['Control','Alt','Shift','Meta'].includes(k))return parts.join('+');if(k===' ')k='Space';return [...parts,k.length===1?k.toUpperCase():k].join('+')}
+function normalizeShortcut(s){return s.toLowerCase().replace('meta','cmd')}
+function eventShortcut(e){let parts=[];if(e.ctrlKey)parts.push('ctrl');if(e.altKey)parts.push('alt');if(e.shiftKey)parts.push('shift');if(e.metaKey)parts.push('cmd');let k=e.key;if(['Control','Alt','Shift','Meta'].includes(k))return parts.join('+');if(k===' ')k='space';return [...parts,k.toLowerCase()].join('+')}
+function openEditor(s){editing=s;document.querySelector('#editName').textContent=s.name;document.querySelector('#nameInput').value=s.name;document.querySelector('#keyInput').value=s.key||'';document.querySelector('#modal').classList.add('show')}
+function closeEditor(){editing=null;document.querySelector('#modal').classList.remove('show')}
+document.querySelector('#keyInput').addEventListener('keydown',e=>{e.preventDefault();if(['Control','Alt','Shift','Meta'].includes(e.key))return;document.querySelector('#keyInput').value=keyText(e)});
+document.querySelector('#save').onclick=async()=>{if(!editing)return;editing.name=document.querySelector('#nameInput').value.trim()||editing.name;editing.key=document.querySelector('#keyInput').value.trim();await put(editing);closeEditor();refresh()};
+document.querySelector('#cancel').onclick=closeEditor;
+document.querySelector('#files').onchange=e=>addFiles(e.target.files);document.querySelector('#add').onclick=()=>document.querySelector('#files').click();document.querySelector('#stop').onclick=stop;document.querySelector('#clear').onclick=async()=>{stop();for(let s of sounds)await del(s.id);refresh()};document.querySelector('#vol').oninput=e=>volume=+e.target.value;
+let drop=document.querySelector('#drop');drop.onclick=e=>{if(e.target.tagName!=='INPUT')document.querySelector('#files').click()};drop.ondragover=e=>{e.preventDefault();drop.classList.add('over')};drop.ondragleave=()=>drop.classList.remove('over');drop.ondrop=e=>{e.preventDefault();drop.classList.remove('over');addFiles(e.dataTransfer.files)};
+document.addEventListener('keydown',e=>{if(document.querySelector('#modal').classList.contains('show'))return;if(e.key==='Escape'){stop();return}let k=eventShortcut(e);let s=sounds.find(x=>normalizeShortcut(x.key||'')===k);if(s){e.preventDefault();play(s,document.querySelector(`[data-id="${s.id}"]`))}});
+openDB().then(refresh);
+</script></body></html>
