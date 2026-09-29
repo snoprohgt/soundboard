@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0b1020">
+<link rel="manifest" href="./manifest.json">
+<title>Mini Soundboard</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{--bg:#0b1020;--panel:#131a2e;--line:#2f3b63;--blue:#3b82f6;--blue2:#60a5fa;--text:#f8fafc;--muted:#94a3b8}
+html,body{margin:0;padding:0;width:100%;min-width:280px;background:radial-gradient(circle at top,#15203c 0%,var(--bg) 55%);color:var(--text);font-family:Arial,sans-serif}
+body{max-width:370px;margin:0 auto;padding:7px;overflow-x:hidden}
+.app{position:relative;background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.01)),var(--panel);border:1px solid var(--line);border-radius:16px;padding:8px;box-shadow:0 12px 30px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.04);overflow:hidden}
+.app:before{content:"";position:absolute;inset:-80px;background:radial-gradient(circle,rgba(59,130,246,.12),transparent 55%);pointer-events:none;animation:breathe 5s ease-in-out infinite}
+@keyframes breathe{0%,100%{transform:scale(.95);opacity:.6}50%{transform:scale(1.05);opacity:1}}
+header{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:7px}
+h1{margin:0;font-size:15px;line-height:1;letter-spacing:.2px}.subtitle{color:var(--muted);font-size:9px;margin-top:3px}
+button{position:relative;overflow:hidden;border:0;color:#fff;cursor:pointer;border-radius:8px;font-family:Arial,sans-serif;transition:transform .08s ease,box-shadow .12s ease,filter .12s ease}
+button:hover{filter:brightness(1.08)}button:active,button.pressed{transform:scale(.94)}
+button:after{content:"";position:absolute;width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.7);transform:translate(-50%,-50%) scale(0);opacity:0;pointer-events:none}
+button.ripple:after{left:var(--ripple-x);top:var(--ripple-y);animation:ripple .45s ease-out}
+@keyframes ripple{0%{transform:translate(-50%,-50%) scale(0);opacity:.55}100%{transform:translate(-50%,-50%) scale(16);opacity:0}}
+.add{background:linear-gradient(180deg,#4f8ff8,#2563eb);padding:6px 8px;font-size:11px;box-shadow:0 4px 12px rgba(37,99,235,.35)}
+.drop{position:relative;z-index:1;border:1px dashed #43527e;border-radius:8px;padding:8px;text-align:center;color:#cbd5e1;font-size:10px;margin-bottom:6px;cursor:pointer;transition:background .2s,border-color .2s,transform .12s,box-shadow .2s}
+.drop:hover{background:#18213c;border-color:var(--blue2)}.drop.over{background:#1a294b;border-color:#60a5fa;transform:scale(1.01);box-shadow:0 0 20px rgba(96,165,250,.18)}
+.controls{position:relative;z-index:1;display:flex;align-items:center;gap:5px;margin-bottom:6px;height:27px}.controls span{font-size:12px}.controls input{flex:1;min-width:0}
+input[type=range]{accent-color:var(--blue2)}.stop{background:linear-gradient(180deg,#ef4444,#991b1b);padding:5px 8px;font-size:10px}
+.sounds{position:relative;z-index:1;display:grid;gap:4px;max-height:380px;overflow-y:auto;overflow-x:hidden}
+.sound{display:grid;grid-template-columns:1fr auto auto auto;gap:3px;align-items:center;background:linear-gradient(180deg,#11192d,#0d1425);border:1px solid rgba(255,255,255,.03);border-radius:8px;padding:4px;transition:transform .15s,box-shadow .15s,border-color .15s}
+.sound.playing{border-color:rgba(96,165,250,.65);box-shadow:0 0 18px rgba(59,130,246,.22);animation:pulseSound .55s ease}
+@keyframes pulseSound{0%{transform:scale(1)}35%{transform:scale(1.015)}100%{transform:scale(1)}}
+.play{background:linear-gradient(180deg,#3b82f6,#2563eb);padding:7px 8px;text-align:left;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:10px;min-width:0;box-shadow:0 3px 9px rgba(37,99,235,.23)}
+.play.flash{animation:flashPlay .25s ease}@keyframes flashPlay{0%{filter:brightness(1)}40%{filter:brightness(1.6)}100%{filter:brightness(1)}}
+.shortcut,.edit{background:linear-gradient(180deg,#475569,#334155);padding:5px 6px;font-size:9px}.shortcut{min-width:32px;max-width:62px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.delete{background:linear-gradient(180deg,#b91c1c,#7f1d1d);padding:5px;font-size:10px}
+.edit-area{display:none;grid-column:1/-1;gap:3px;margin-top:2px}.sound.editing .edit-area{display:flex}
+.edit-area input{min-width:0;flex:1;background:#0b1020;border:1px solid #425071;color:white;border-radius:6px;padding:5px;font-size:10px;outline:none}
+.empty{text-align:center;color:var(--muted);padding:15px 5px;font-size:10px}footer{text-align:center;color:#64748b;font-size:8px;margin-top:5px}
+.particle{position:fixed;width:5px;height:5px;border-radius:50%;background:#93c5fd;pointer-events:none;z-index:99999;animation:particle .45s ease-out forwards}
+@keyframes particle{0%{transform:translate(0,0) scale(1);opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(.3);opacity:0}}
+.screen-flash{position:fixed;inset:0;background:radial-gradient(circle,rgba(59,130,246,.08),transparent 55%);pointer-events:none;opacity:0;z-index:9990}.screen-flash.active{animation:screenFlash .22s ease}
+@keyframes screenFlash{0%{opacity:0}35%{opacity:1}100%{opacity:0}}
+</style>
+</head>
+<body>
+<div class="screen-flash" id="screenFlash"></div>
+<div class="app">
+<header><div><h1>🎵 Soundboard</h1><div class="subtitle">Compact • haptic • FX</div></div><button class="add" id="addButton">＋ Son</button></header>
+<div class="drop" id="dropZone">🎵 Glisse un son ici ou clique</div>
+<input id="fileInput" type="file" accept="audio/*" multiple hidden>
+<div class="controls"><span>🔊</span><input id="volume" type="range" min="0" max="1" step="0.01" value="0.8"><button class="stop" id="stopButton">■ Stop</button></div>
+<div class="sounds" id="sounds"></div><footer>Échap = arrêter</footer>
+</div>
+<script>
+const DATABASE_NAME="MiniSoundboard",STORE_NAME="sounds";let database,volume=.8,playingSounds=new Set,shortcutCapture=null;
+function haptic(p=12){if("vibrate"in navigator)navigator.vibrate(p)}
+function ripple(b,e){const r=b.getBoundingClientRect();b.style.setProperty("--ripple-x",e.clientX-r.left+"px");b.style.setProperty("--ripple-y",e.clientY-r.top+"px");b.classList.remove("ripple");void b.offsetWidth;b.classList.add("ripple")}
+document.addEventListener("pointerdown",e=>{const b=e.target.closest("button");if(b){haptic(10);ripple(b,e);b.classList.add("pressed")}});
+document.addEventListener("pointerup",e=>{const b=e.target.closest("button");if(b)b.classList.remove("pressed")});
+function flash(){const f=document.getElementById("screenFlash");f.classList.remove("active");void f.offsetWidth;f.classList.add("active")}
+function particles(el){const r=el.getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2;for(let i=0;i<7;i++){const p=document.createElement("div");p.className="particle";p.style.left=x+"px";p.style.top=y+"px";const a=Math.random()*Math.PI*2,d=18+Math.random()*24;p.style.setProperty("--dx",Math.cos(a)*d+"px");p.style.setProperty("--dy",Math.sin(a)*d+"px");document.body.appendChild(p);setTimeout(()=>p.remove(),500)}}
+function openDatabase(){return new Promise((res,rej)=>{const r=indexedDB.open(DATABASE_NAME,2);r.onupgradeneeded=()=>{const db=r.result;if(!db.objectStoreNames.contains(STORE_NAME))db.createObjectStore(STORE_NAME,{keyPath:"id",autoIncrement:true})};r.onsuccess=()=>{database=r.result;res()};r.onerror=()=>rej(r.error)})}
+function getSounds(){return new Promise((res,rej)=>{const r=database.transaction(STORE_NAME,"readonly").objectStore(STORE_NAME).getAll();r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
+function saveSound(s){return new Promise((res,rej)=>{const r=database.transaction(STORE_NAME,"readwrite").objectStore(STORE_NAME).put(s);r.onsuccess=res;r.onerror=()=>rej(r.error)})}
+function deleteSound(id){haptic([20,25,20]);database.transaction(STORE_NAME,"readwrite").objectStore(STORE_NAME).delete(id);setTimeout(renderSounds,100)}
+function normalizeKey(e){return{key:e.key.toLowerCase(),ctrl:e.ctrlKey,alt:e.altKey,shift:e.shiftKey,meta:e.metaKey}}
+function shortcutText(s){if(!s)return"—";const p=[];if(s.ctrl)p.push("Ctrl");if(s.alt)p.push("Alt");if(s.shift)p.push("Shift");if(s.meta)p.push("⌘");p.push(s.key);return p.join("+")}
+function sameShortcut(a,b){return!!a&&!!b&&a.key===b.key&&a.ctrl===b.ctrl&&a.alt===b.alt&&a.shift===b.shift&&a.meta===b.meta}
+function playSound(s,b,row){haptic([12,15,8]);flash();particles(b);for(const a of playingSounds){a.pause();a.currentTime=0}playingSounds.clear();document.querySelectorAll(".sound.playing").forEach(r=>r.classList.remove("playing"));b.classList.remove("flash");void b.offsetWidth;b.classList.add("flash");row.classList.add("playing");const u=URL.createObjectURL(s.blob),a=new Audio(u);a.volume=volume;playingSounds.add(a);a.onended=()=>{playingSounds.delete(a);URL.revokeObjectURL(u);row.classList.remove("playing")};a.play()}
+async function addFiles(files){for(const f of files){if(!f.type.startsWith("audio/"))continue;await saveSound({name:f.name.replace(/\.[^/.]+$/,""),blob:f,shortcut:null})}haptic([15,20,15]);renderSounds()}
+async function renderSounds(){const c=document.getElementById("sounds"),ss=await getSounds();c.innerHTML="";if(!ss.length){c.innerHTML='<div class="empty">Aucun son</div>';return}for(const s of ss){const row=document.createElement("div");row.className="sound";const play=document.createElement("button");play.className="play";play.textContent="▶ "+s.name;play.onclick=()=>playSound(s,play,row);const sh=document.createElement("button");sh.className="shortcut";sh.textContent=shortcutText(s.shortcut);sh.onclick=()=>{shortcutCapture=s.id;sh.textContent="Appuie";haptic(15)};const ed=document.createElement("button");ed.className="edit";ed.textContent="✎";ed.onclick=()=>row.classList.toggle("editing");const del=document.createElement("button");del.className="delete";del.textContent="×";del.onclick=()=>deleteSound(s.id);const area=document.createElement("div");area.className="edit-area";const inp=document.createElement("input");inp.value=s.name;const ok=document.createElement("button");ok.className="edit";ok.textContent="OK";ok.onclick=async()=>{s.name=inp.value.trim()||"Son";await saveSound(s);haptic(12);renderSounds()};area.append(inp,ok);row.append(play,sh,ed,del,area);c.appendChild(row)}}
+document.getElementById("addButton").onclick=()=>document.getElementById("fileInput").click();
+document.getElementById("fileInput").onchange=e=>addFiles(e.target.files);
+document.getElementById("volume").oninput=e=>{volume=Number(e.target.value);haptic(4)};
+document.getElementById("stopButton").onclick=()=>{haptic([20,30,20]);for(const a of playingSounds){a.pause();a.currentTime=0}playingSounds.clear();document.querySelectorAll(".sound.playing").forEach(r=>r.classList.remove("playing"))};
+const dz=document.getElementById("dropZone");dz.onclick=()=>{haptic(8);document.getElementById("fileInput").click()};dz.ondragover=e=>{e.preventDefault();dz.classList.add("over")};dz.ondragleave=()=>dz.classList.remove("over");dz.ondrop=e=>{e.preventDefault();dz.classList.remove("over");addFiles(e.dataTransfer.files)};
+document.addEventListener("keydown",async e=>{if(e.key==="Escape"){document.getElementById("stopButton").click();return}if(shortcutCapture!==null){e.preventDefault();const ss=await getSounds(),s=ss.find(x=>x.id===shortcutCapture);if(s){s.shortcut=normalizeKey(e);await saveSound(s);haptic([10,15,10])}shortcutCapture=null;renderSounds();return}const p=normalizeKey(e),ss=await getSounds(),s=ss.find(x=>sameShortcut(x.shortcut,p));if(s){e.preventDefault();const rows=[...document.querySelectorAll(".sound")],i=ss.findIndex(x=>x.id===s.id),row=rows[i],b=row?.querySelector(".play");if(b&&row)playSound(s,b,row)}});
+openDatabase().then(renderSounds);if("serviceWorker"in navigator)navigator.serviceWorker.register("./sw.js");
+</script>
+</body>
+</html>
