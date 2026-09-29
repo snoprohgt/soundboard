@@ -2,54 +2,72 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#111827">
-  <link rel="manifest" href="./manifest.json">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <meta
+    name="theme-color"
+    content="#111827"
+  >
+
+  <link
+    rel="manifest"
+    href="./manifest.json"
+  >
+
   <title>Mini Soundboard</title>
 
   <style>
-    * { box-sizing: border-box; }
 
-    html, body {
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
       margin: 0;
       padding: 0;
       width: 100%;
-      min-width: 320px;
+      min-width: 280px;
       background: #111827;
       color: white;
       font-family: Arial, sans-serif;
     }
 
     body {
-      max-width: 430px;
-      margin: auto;
-      padding: 10px;
+      width: 100%;
+      max-width: 360px;
+      margin: 0 auto;
+      padding: 6px;
     }
 
     .app {
       background: #1f2937;
       border: 1px solid #374151;
-      border-radius: 18px;
-      padding: 12px;
-      box-shadow: 0 10px 30px rgba(0,0,0,.4);
+      border-radius: 12px;
+      padding: 7px;
     }
 
     header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 8px;
-      margin-bottom: 10px;
+      gap: 5px;
+      margin-bottom: 6px;
     }
 
     h1 {
       margin: 0;
-      font-size: 18px;
+      font-size: 15px;
+      line-height: 1;
     }
 
     .subtitle {
       color: #9ca3af;
-      font-size: 11px;
+      font-size: 9px;
       margin-top: 3px;
     }
 
@@ -57,23 +75,24 @@
       border: 0;
       cursor: pointer;
       color: white;
-      border-radius: 9px;
+      border-radius: 6px;
+      font-family: Arial, sans-serif;
     }
 
     .add {
       background: #2563eb;
-      padding: 8px 11px;
-      font-size: 13px;
+      padding: 6px 8px;
+      font-size: 11px;
     }
 
     .drop {
-      border: 2px dashed #4b5563;
-      border-radius: 12px;
-      padding: 14px;
+      border: 1px dashed #4b5563;
+      border-radius: 7px;
+      padding: 7px;
       text-align: center;
       color: #cbd5e1;
-      font-size: 12px;
-      margin-bottom: 10px;
+      font-size: 10px;
+      margin-bottom: 6px;
       cursor: pointer;
     }
 
@@ -85,66 +104,82 @@
     .controls {
       display: flex;
       align-items: center;
-      gap: 8px;
-      margin-bottom: 10px;
+      gap: 5px;
+      margin-bottom: 6px;
+      height: 25px;
+    }
+
+    .controls span {
+      font-size: 12px;
     }
 
     .controls input {
       flex: 1;
+      min-width: 0;
+      height: 16px;
     }
 
     .stop {
       background: #991b1b;
-      padding: 8px 10px;
+      padding: 5px 7px;
+      font-size: 10px;
     }
 
     .sounds {
       display: grid;
-      gap: 7px;
-      max-height: 430px;
+      gap: 4px;
+      max-height: 360px;
       overflow-y: auto;
     }
 
     .sound {
       display: grid;
       grid-template-columns: 1fr auto auto auto;
-      gap: 6px;
+      gap: 3px;
       align-items: center;
       background: #111827;
-      border-radius: 10px;
-      padding: 7px;
+      border-radius: 6px;
+      padding: 3px;
     }
 
     .play {
       background: #2563eb;
-      padding: 9px;
+      padding: 6px 7px;
       text-align: left;
       overflow: hidden;
       white-space: nowrap;
       text-overflow: ellipsis;
+      font-size: 10px;
+      min-width: 0;
     }
 
     .shortcut {
       background: #374151;
-      padding: 6px 8px;
-      min-width: 45px;
-      font-size: 11px;
+      padding: 5px 6px;
+      min-width: 30px;
+      max-width: 60px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 9px;
     }
 
     .edit {
       background: #374151;
-      padding: 7px;
+      padding: 5px;
+      font-size: 10px;
     }
 
     .delete {
       background: #7f1d1d;
-      padding: 7px;
+      padding: 5px;
+      font-size: 10px;
     }
 
     .edit-area {
       display: none;
       grid-column: 1 / -1;
-      gap: 5px;
+      gap: 3px;
     }
 
     .sound.editing .edit-area {
@@ -157,23 +192,25 @@
       background: #111827;
       border: 1px solid #4b5563;
       color: white;
-      border-radius: 7px;
-      padding: 7px;
+      border-radius: 5px;
+      padding: 5px;
+      font-size: 10px;
     }
 
     .empty {
       text-align: center;
       color: #9ca3af;
-      padding: 20px;
-      font-size: 13px;
+      padding: 14px 5px;
+      font-size: 10px;
     }
 
     footer {
       text-align: center;
       color: #6b7280;
-      font-size: 10px;
-      margin-top: 9px;
+      font-size: 8px;
+      margin-top: 5px;
     }
+
   </style>
 </head>
 
@@ -182,148 +219,290 @@
 <div class="app">
 
   <header>
+
     <div>
       <h1>🎵 Soundboard</h1>
-      <div class="subtitle">Petite fenêtre • raccourcis configurables</div>
+
+      <div class="subtitle">
+        Compact • raccourcis
+      </div>
     </div>
 
-    <button class="add" id="addButton">＋ Son</button>
+    <button
+      class="add"
+      id="addButton"
+    >
+      ＋ Son
+    </button>
+
   </header>
 
-  <div class="drop" id="dropZone">
-    🎵 Glisse tes fichiers audio ici<br>
-    ou clique pour les choisir
+  <div
+    class="drop"
+    id="dropZone"
+  >
+    🎵 Glisse un son ici ou clique
   </div>
 
-  <input id="fileInput" type="file" accept="audio/*" multiple hidden>
+  <input
+    id="fileInput"
+    type="file"
+    accept="audio/*"
+    multiple
+    hidden
+  >
 
   <div class="controls">
+
     <span>🔊</span>
-    <input id="volume" type="range" min="0" max="1" step="0.01" value="0.8">
-    <button class="stop" id="stopButton">■ Stop</button>
+
+    <input
+      id="volume"
+      type="range"
+      min="0"
+      max="1"
+      step="0.01"
+      value="0.8"
+    >
+
+    <button
+      class="stop"
+      id="stopButton"
+    >
+      ■ Stop
+    </button>
+
   </div>
 
-  <div class="sounds" id="sounds"></div>
+  <div
+    class="sounds"
+    id="sounds"
+  ></div>
 
-  <footer>Échap = arrêter tous les sons</footer>
+  <footer>
+    Échap = arrêter
+  </footer>
 
 </div>
+
 
 <script>
 
 const DATABASE_NAME = "MiniSoundboard";
+
 const STORE_NAME = "sounds";
 
 let database;
+
 let volume = 0.8;
+
 let playingSounds = new Set();
+
 let shortcutCapture = null;
+
+
+/* DATABASE */
 
 function openDatabase() {
 
   return new Promise((resolve, reject) => {
 
-    const request = indexedDB.open(DATABASE_NAME, 2);
+    const request =
+      indexedDB.open(
+        DATABASE_NAME,
+        2
+      );
 
-    request.onupgradeneeded = function() {
+    request.onupgradeneeded =
+      function () {
 
-      const db = request.result;
+        const db =
+          request.result;
 
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        db.createObjectStore(STORE_NAME, {
-          keyPath: "id",
-          autoIncrement: true
-        });
-      }
+        if (
+          !db.objectStoreNames
+            .contains(STORE_NAME)
+        ) {
 
-    };
+          db.createObjectStore(
+            STORE_NAME,
+            {
+              keyPath: "id",
+              autoIncrement: true
+            }
+          );
 
-    request.onsuccess = function() {
-      database = request.result;
-      resolve();
-    };
+        }
 
-    request.onerror = function() {
-      reject(request.error);
-    };
+      };
+
+    request.onsuccess =
+      function () {
+
+        database =
+          request.result;
+
+        resolve();
+
+      };
+
+    request.onerror =
+      function () {
+
+        reject(
+          request.error
+        );
+
+      };
 
   });
 
 }
+
+
+/* GET SOUNDS */
 
 function getSounds() {
 
-  return new Promise((resolve, reject) => {
+  return new Promise(
+    (resolve, reject) => {
 
-    const transaction =
-      database.transaction(STORE_NAME, "readonly");
+      const transaction =
+        database.transaction(
+          STORE_NAME,
+          "readonly"
+        );
 
-    const store =
-      transaction.objectStore(STORE_NAME);
+      const store =
+        transaction.objectStore(
+          STORE_NAME
+        );
 
-    const request = store.getAll();
+      const request =
+        store.getAll();
 
-    request.onsuccess = () => resolve(request.result);
+      request.onsuccess =
+        () => resolve(
+          request.result
+        );
 
-    request.onerror = () => reject(request.error);
+      request.onerror =
+        () => reject(
+          request.error
+        );
 
-  });
+    }
+  );
 
 }
+
+
+/* SAVE */
 
 function saveSound(sound) {
 
-  return new Promise((resolve, reject) => {
+  return new Promise(
+    (resolve, reject) => {
 
-    const transaction =
-      database.transaction(STORE_NAME, "readwrite");
+      const transaction =
+        database.transaction(
+          STORE_NAME,
+          "readwrite"
+        );
 
-    const store =
-      transaction.objectStore(STORE_NAME);
+      const store =
+        transaction.objectStore(
+          STORE_NAME
+        );
 
-    const request = store.put(sound);
+      const request =
+        store.put(sound);
 
-    request.onsuccess = resolve;
+      request.onsuccess =
+        resolve;
 
-    request.onerror = () => reject(request.error);
+      request.onerror =
+        () => reject(
+          request.error
+        );
 
-  });
+    }
+  );
 
 }
+
+
+/* DELETE */
 
 function deleteSound(id) {
 
   const transaction =
-    database.transaction(STORE_NAME, "readwrite");
+    database.transaction(
+      STORE_NAME,
+      "readwrite"
+    );
 
-  transaction.objectStore(STORE_NAME).delete(id);
+  transaction
+    .objectStore(STORE_NAME)
+    .delete(id);
 
-  renderSounds();
+  setTimeout(
+    renderSounds,
+    100
+  );
 
 }
+
+
+/* SHORTCUT */
 
 function normalizeKey(event) {
 
   return {
-    key: event.key.toLowerCase(),
-    ctrl: event.ctrlKey,
-    alt: event.altKey,
-    shift: event.shiftKey,
-    meta: event.metaKey
+
+    key:
+      event.key.toLowerCase(),
+
+    ctrl:
+      event.ctrlKey,
+
+    alt:
+      event.altKey,
+
+    shift:
+      event.shiftKey,
+
+    meta:
+      event.metaKey
+
   };
 
 }
 
+
 function shortcutText(shortcut) {
 
-  if (!shortcut) return "—";
+  if (!shortcut) {
+    return "—";
+  }
 
   const parts = [];
 
-  if (shortcut.ctrl) parts.push("Ctrl");
-  if (shortcut.alt) parts.push("Alt");
-  if (shortcut.shift) parts.push("Shift");
-  if (shortcut.meta) parts.push("⌘");
+  if (shortcut.ctrl) {
+    parts.push("Ctrl");
+  }
+
+  if (shortcut.alt) {
+    parts.push("Alt");
+  }
+
+  if (shortcut.shift) {
+    parts.push("Shift");
+  }
+
+  if (shortcut.meta) {
+    parts.push("⌘");
+  }
 
   parts.push(shortcut.key);
 
@@ -331,55 +510,102 @@ function shortcutText(shortcut) {
 
 }
 
+
 function sameShortcut(a, b) {
 
-  if (!a || !b) return false;
+  if (!a || !b) {
+    return false;
+  }
 
   return (
+
     a.key === b.key &&
+
     a.ctrl === b.ctrl &&
+
     a.alt === b.alt &&
+
     a.shift === b.shift &&
+
     a.meta === b.meta
+
   );
 
 }
 
+
+/* PLAY */
+
 function playSound(sound) {
 
-  const url = URL.createObjectURL(sound.blob);
+  const url =
+    URL.createObjectURL(
+      sound.blob
+    );
 
-  const audio = new Audio(url);
+  const audio =
+    new Audio(url);
 
-  audio.volume = volume;
+  audio.volume =
+    volume;
 
-  playingSounds.add(audio);
+  playingSounds.add(
+    audio
+  );
 
-  audio.onended = function() {
+  audio.onended =
+    function () {
 
-    playingSounds.delete(audio);
+      playingSounds.delete(
+        audio
+      );
 
-    URL.revokeObjectURL(url);
+      URL.revokeObjectURL(
+        url
+      );
 
-  };
+    };
 
   audio.play();
 
 }
 
+
+/* ADD FILES */
+
 async function addFiles(files) {
 
-  for (const file of files) {
+  for (
+    const file of files
+  ) {
 
-    if (!file.type.startsWith("audio/")) continue;
+    if (
+      !file.type.startsWith(
+        "audio/"
+      )
+    ) {
+
+      continue;
+
+    }
 
     const name =
-      file.name.replace(/\.[^/.]+$/, "");
+      file.name.replace(
+        /\.[^/.]+$/,
+        ""
+      );
 
     await saveSound({
-      name: name,
-      blob: file,
-      shortcut: null
+
+      name:
+        name,
+
+      blob:
+        file,
+
+      shortcut:
+        null
+
     });
 
   }
@@ -388,106 +614,182 @@ async function addFiles(files) {
 
 }
 
+
+/* DISPLAY */
+
 async function renderSounds() {
 
   const container =
-    document.getElementById("sounds");
+    document.getElementById(
+      "sounds"
+    );
 
   const sounds =
     await getSounds();
 
-  container.innerHTML = "";
+  container.innerHTML =
+    "";
 
-  if (sounds.length === 0) {
+  if (
+    sounds.length === 0
+  ) {
 
     container.innerHTML =
-      '<div class="empty">Aucun son pour le moment.</div>';
+      '<div class="empty">Aucun son</div>';
 
     return;
 
   }
 
-  for (const sound of sounds) {
+  for (
+    const sound of sounds
+  ) {
 
     const row =
-      document.createElement("div");
+      document.createElement(
+        "div"
+      );
 
-    row.className = "sound";
+    row.className =
+      "sound";
+
+
+    /* PLAY */
 
     const play =
-      document.createElement("button");
+      document.createElement(
+        "button"
+      );
 
-    play.className = "play";
+    play.className =
+      "play";
 
-    play.textContent = "▶ " + sound.name;
+    play.textContent =
+      "▶ " + sound.name;
 
-    play.onclick = () => playSound(sound);
+    play.onclick =
+      () => playSound(sound);
+
+
+    /* SHORTCUT */
 
     const shortcut =
-      document.createElement("button");
+      document.createElement(
+        "button"
+      );
 
-    shortcut.className = "shortcut";
+    shortcut.className =
+      "shortcut";
 
     shortcut.textContent =
-      shortcutText(sound.shortcut);
+      shortcutText(
+        sound.shortcut
+      );
 
-    shortcut.onclick = () => {
+    shortcut.onclick =
+      () => {
 
-      shortcutCapture = sound.id;
+        shortcutCapture =
+          sound.id;
 
-      shortcut.textContent = "Appuie…";
+        shortcut.textContent =
+          "Appuie";
 
-    };
+      };
+
+
+    /* EDIT */
 
     const edit =
-      document.createElement("button");
+      document.createElement(
+        "button"
+      );
 
-    edit.className = "edit";
+    edit.className =
+      "edit";
 
-    edit.textContent = "✎";
+    edit.textContent =
+      "✎";
 
-    edit.onclick = () =>
-      row.classList.toggle("editing");
+    edit.onclick =
+      () =>
+        row.classList.toggle(
+          "editing"
+        );
+
+
+    /* DELETE */
 
     const remove =
-      document.createElement("button");
+      document.createElement(
+        "button"
+      );
 
-    remove.className = "delete";
+    remove.className =
+      "delete";
 
-    remove.textContent = "×";
+    remove.textContent =
+      "×";
 
-    remove.onclick = () =>
-      deleteSound(sound.id);
+    remove.onclick =
+      () =>
+        deleteSound(
+          sound.id
+        );
+
+
+    /* EDIT AREA */
 
     const editArea =
-      document.createElement("div");
+      document.createElement(
+        "div"
+      );
 
-    editArea.className = "edit-area";
+    editArea.className =
+      "edit-area";
+
 
     const nameInput =
-      document.createElement("input");
+      document.createElement(
+        "input"
+      );
 
-    nameInput.value = sound.name;
+    nameInput.value =
+      sound.name;
+
 
     const save =
-      document.createElement("button");
+      document.createElement(
+        "button"
+      );
 
-    save.className = "edit";
+    save.className =
+      "edit";
 
-    save.textContent = "OK";
+    save.textContent =
+      "OK";
 
-    save.onclick = async () => {
+    save.onclick =
+      async () => {
 
-      sound.name =
-        nameInput.value.trim() || "Son";
+        sound.name =
+          nameInput.value.trim()
+          || "Son";
 
-      await saveSound(sound);
+        await saveSound(
+          sound
+        );
 
-      renderSounds();
+        renderSounds();
 
-    };
+      };
 
-    editArea.append(nameInput, save);
+
+    editArea.append(
+      nameInput,
+      save
+    );
+
 
     row.append(
       play,
@@ -497,125 +799,238 @@ async function renderSounds() {
       editArea
     );
 
-    container.appendChild(row);
+    container.appendChild(
+      row
+    );
 
   }
 
 }
 
-document.getElementById("addButton").onclick =
-  () => document.getElementById("fileInput").click();
 
-document.getElementById("fileInput").onchange =
-  e => addFiles(e.target.files);
+/* ADD BUTTON */
 
-document.getElementById("volume").oninput =
-  e => volume = Number(e.target.value);
+document
+  .getElementById(
+    "addButton"
+  )
+  .onclick =
+  () =>
+    document
+      .getElementById(
+        "fileInput"
+      )
+      .click();
 
-document.getElementById("stopButton").onclick =
+
+/* FILE INPUT */
+
+document
+  .getElementById(
+    "fileInput"
+  )
+  .onchange =
+  e =>
+    addFiles(
+      e.target.files
+    );
+
+
+/* VOLUME */
+
+document
+  .getElementById(
+    "volume"
+  )
+  .oninput =
+  e =>
+    volume =
+      Number(
+        e.target.value
+      );
+
+
+/* STOP */
+
+document
+  .getElementById(
+    "stopButton"
+  )
+  .onclick =
   () => {
 
-    for (const audio of playingSounds) {
+    for (
+      const audio
+      of playingSounds
+    ) {
 
       audio.pause();
-      audio.currentTime = 0;
+
+      audio.currentTime =
+        0;
 
     }
 
   };
 
+
+/* DRAG DROP */
+
 const dropZone =
-  document.getElementById("dropZone");
+  document.getElementById(
+    "dropZone"
+  );
 
 dropZone.onclick =
-  () => document.getElementById("fileInput").click();
+  () =>
+    document
+      .getElementById(
+        "fileInput"
+      )
+      .click();
+
 
 dropZone.ondragover =
   e => {
 
     e.preventDefault();
 
-    dropZone.classList.add("over");
+    dropZone.classList.add(
+      "over"
+    );
 
   };
 
+
 dropZone.ondragleave =
-  () => dropZone.classList.remove("over");
+  () =>
+    dropZone.classList.remove(
+      "over"
+    );
+
 
 dropZone.ondrop =
   e => {
 
     e.preventDefault();
 
-    dropZone.classList.remove("over");
+    dropZone.classList.remove(
+      "over"
+    );
 
-    addFiles(e.dataTransfer.files);
+    addFiles(
+      e.dataTransfer.files
+    );
 
   };
 
-document.addEventListener("keydown", async function(event) {
 
-  if (event.key === "Escape") {
+/* KEYBOARD */
 
-    document.getElementById("stopButton").click();
+document.addEventListener(
+  "keydown",
+  async function(event) {
 
-    return;
+    if (
+      event.key ===
+      "Escape"
+    ) {
 
-  }
+      document
+        .getElementById(
+          "stopButton"
+        )
+        .click();
 
-  if (shortcutCapture !== null) {
+      return;
 
-    event.preventDefault();
+    }
+
+
+    if (
+      shortcutCapture !== null
+    ) {
+
+      event.preventDefault();
+
+      const sounds =
+        await getSounds();
+
+      const sound =
+        sounds.find(
+          s =>
+            s.id ===
+            shortcutCapture
+        );
+
+      if (sound) {
+
+        sound.shortcut =
+          normalizeKey(
+            event
+          );
+
+        await saveSound(
+          sound
+        );
+
+      }
+
+      shortcutCapture =
+        null;
+
+      renderSounds();
+
+      return;
+
+    }
+
+
+    const pressed =
+      normalizeKey(event);
 
     const sounds =
       await getSounds();
 
     const sound =
-      sounds.find(s => s.id === shortcutCapture);
+      sounds.find(
+        s =>
+          sameShortcut(
+            s.shortcut,
+            pressed
+          )
+      );
 
     if (sound) {
 
-      sound.shortcut =
-        normalizeKey(event);
+      event.preventDefault();
 
-      await saveSound(sound);
+      playSound(sound);
 
     }
 
-    shortcutCapture = null;
-
-    renderSounds();
-
-    return;
-
   }
+);
 
-  const pressed =
-    normalizeKey(event);
 
-  const sounds =
-    await getSounds();
+/* START */
 
-  const sound =
-    sounds.find(s =>
-      sameShortcut(s.shortcut, pressed)
-    );
+openDatabase()
+  .then(
+    renderSounds
+  );
 
-  if (sound) {
 
-    event.preventDefault();
+/* SERVICE WORKER */
 
-    playSound(sound);
+if (
+  "serviceWorker"
+  in navigator
+) {
 
-  }
-
-});
-
-openDatabase().then(renderSounds);
-
-if ("serviceWorker" in navigator) {
-
-  navigator.serviceWorker.register("./sw.js");
+  navigator.serviceWorker.register(
+    "./sw.js"
+  );
 
 }
 
