@@ -4,7 +4,6 @@
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "orientation": "portrait",
   "background_color": "#111827",
   "theme_color": "#111827",
   "description": "Mini soundboard compacte pour Chromebook",
