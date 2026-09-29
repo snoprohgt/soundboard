@@ -10,7 +10,7 @@
 
   <meta
     name="theme-color"
-    content="#111827"
+    content="#0b1020"
   >
 
   <link
@@ -21,9 +21,21 @@
   <title>Mini Soundboard</title>
 
   <style>
-
     * {
       box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    :root {
+      --bg: #0b1020;
+      --panel: #131a2e;
+      --panel2: #1a2340;
+      --line: #2f3b63;
+      --blue: #3b82f6;
+      --blue2: #60a5fa;
+      --red: #dc2626;
+      --text: #f8fafc;
+      --muted: #94a3b8;
     }
 
     html,
@@ -32,81 +44,240 @@
       padding: 0;
       width: 100%;
       min-width: 280px;
-      background: #111827;
-      color: white;
+      background:
+        radial-gradient(circle at top, #15203c 0%, var(--bg) 55%);
+      color: var(--text);
       font-family: Arial, sans-serif;
     }
 
     body {
       width: 100%;
-      max-width: 360px;
+      max-width: 370px;
       margin: 0 auto;
-      padding: 6px;
+      padding: 7px;
+      overflow-x: hidden;
     }
 
     .app {
-      background: #1f2937;
-      border: 1px solid #374151;
-      border-radius: 12px;
-      padding: 7px;
+      position: relative;
+      background:
+        linear-gradient(
+          180deg,
+          rgba(255,255,255,.03),
+          rgba(255,255,255,.01)
+        ),
+        var(--panel);
+
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 8px;
+
+      box-shadow:
+        0 12px 30px rgba(0,0,0,.35),
+        inset 0 1px 0 rgba(255,255,255,.04);
+
+      overflow: hidden;
+    }
+
+    .app::before {
+      content: "";
+      position: absolute;
+      inset: -80px;
+      background:
+        radial-gradient(
+          circle,
+          rgba(59,130,246,.12),
+          transparent 55%
+        );
+      pointer-events: none;
+      animation: breathe 5s ease-in-out infinite;
+    }
+
+    @keyframes breathe {
+      0%,100% {
+        transform: scale(.95);
+        opacity: .6;
+      }
+
+      50% {
+        transform: scale(1.05);
+        opacity: 1;
+      }
     }
 
     header {
+      position: relative;
+      z-index: 1;
+
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 5px;
-      margin-bottom: 6px;
+
+      gap: 6px;
+      margin-bottom: 7px;
     }
 
     h1 {
       margin: 0;
       font-size: 15px;
       line-height: 1;
+      letter-spacing: .2px;
     }
 
     .subtitle {
-      color: #9ca3af;
+      color: var(--muted);
       font-size: 9px;
       margin-top: 3px;
     }
 
     button {
+      position: relative;
+      overflow: hidden;
+
       border: 0;
-      cursor: pointer;
       color: white;
-      border-radius: 6px;
+      cursor: pointer;
+
+      border-radius: 8px;
+
       font-family: Arial, sans-serif;
+
+      transition:
+        transform .08s ease,
+        box-shadow .12s ease,
+        filter .12s ease;
+    }
+
+    button:hover {
+      filter: brightness(1.08);
+    }
+
+    button:active,
+    button.pressed {
+      transform: scale(.94);
+    }
+
+    button::after {
+      content: "";
+      position: absolute;
+
+      width: 10px;
+      height: 10px;
+
+      border-radius: 50%;
+
+      background: rgba(255,255,255,.7);
+
+      transform:
+        translate(-50%, -50%)
+        scale(0);
+
+      opacity: 0;
+
+      pointer-events: none;
+    }
+
+    button.ripple::after {
+      left: var(--ripple-x);
+      top: var(--ripple-y);
+
+      animation:
+        ripple .45s ease-out;
+    }
+
+    @keyframes ripple {
+      0% {
+        transform:
+          translate(-50%, -50%)
+          scale(0);
+
+        opacity: .55;
+      }
+
+      100% {
+        transform:
+          translate(-50%, -50%)
+          scale(16);
+
+        opacity: 0;
+      }
     }
 
     .add {
-      background: #2563eb;
+      background:
+        linear-gradient(
+          180deg,
+          #4f8ff8,
+          #2563eb
+        );
+
       padding: 6px 8px;
       font-size: 11px;
+
+      box-shadow:
+        0 4px 12px rgba(37,99,235,.35);
+    }
+
+    .add:active {
+      box-shadow:
+        0 2px 6px rgba(37,99,235,.25);
     }
 
     .drop {
-      border: 1px dashed #4b5563;
-      border-radius: 7px;
-      padding: 7px;
+      position: relative;
+      z-index: 1;
+
+      border:
+        1px dashed #43527e;
+
+      border-radius: 8px;
+
+      padding: 8px;
+
       text-align: center;
+
       color: #cbd5e1;
+
       font-size: 10px;
+
       margin-bottom: 6px;
+
       cursor: pointer;
+
+      transition:
+        background .2s,
+        border-color .2s,
+        transform .12s,
+        box-shadow .2s;
+    }
+
+    .drop:hover {
+      background: #18213c;
+      border-color: var(--blue2);
     }
 
     .drop.over {
-      background: #263449;
+      background: #1a294b;
       border-color: #60a5fa;
+
+      transform: scale(1.01);
+
+      box-shadow:
+        0 0 20px rgba(96,165,250,.18);
     }
 
     .controls {
+      position: relative;
+      z-index: 1;
+
       display: flex;
       align-items: center;
+
       gap: 5px;
+
       margin-bottom: 6px;
-      height: 25px;
+
+      height: 27px;
     }
 
     .controls span {
@@ -116,99 +287,329 @@
     .controls input {
       flex: 1;
       min-width: 0;
-      height: 16px;
+    }
+
+    input[type="range"] {
+      accent-color: var(--blue2);
     }
 
     .stop {
-      background: #991b1b;
-      padding: 5px 7px;
+      background:
+        linear-gradient(
+          180deg,
+          #ef4444,
+          #991b1b
+        );
+
+      padding: 5px 8px;
       font-size: 10px;
+
+      box-shadow:
+        0 4px 12px rgba(220,38,38,.22);
     }
 
     .sounds {
+      position: relative;
+      z-index: 1;
+
       display: grid;
       gap: 4px;
-      max-height: 360px;
+
+      max-height: 380px;
+
       overflow-y: auto;
+      overflow-x: hidden;
+
+      padding-right: 1px;
     }
 
     .sound {
+      position: relative;
+
       display: grid;
-      grid-template-columns: 1fr auto auto auto;
+
+      grid-template-columns:
+        1fr auto auto auto;
+
       gap: 3px;
+
       align-items: center;
-      background: #111827;
-      border-radius: 6px;
-      padding: 3px;
+
+      background:
+        linear-gradient(
+          180deg,
+          #11192d,
+          #0d1425
+        );
+
+      border:
+        1px solid rgba(255,255,255,.03);
+
+      border-radius: 8px;
+
+      padding: 4px;
+
+      transition:
+        transform .15s,
+        box-shadow .15s,
+        border-color .15s;
+    }
+
+    .sound.playing {
+      border-color:
+        rgba(96,165,250,.65);
+
+      box-shadow:
+        0 0 18px rgba(59,130,246,.22);
+
+      animation:
+        pulseSound .55s ease;
+    }
+
+    @keyframes pulseSound {
+      0% {
+        transform: scale(1);
+      }
+
+      35% {
+        transform: scale(1.015);
+      }
+
+      100% {
+        transform: scale(1);
+      }
     }
 
     .play {
-      background: #2563eb;
-      padding: 6px 7px;
+      background:
+        linear-gradient(
+          180deg,
+          #3b82f6,
+          #2563eb
+        );
+
+      padding: 7px 8px;
+
       text-align: left;
+
       overflow: hidden;
       white-space: nowrap;
       text-overflow: ellipsis;
+
       font-size: 10px;
+
       min-width: 0;
+
+      box-shadow:
+        0 3px 9px rgba(37,99,235,.23);
+    }
+
+    .play.flash {
+      animation:
+        flashPlay .25s ease;
+    }
+
+    @keyframes flashPlay {
+      0% {
+        filter: brightness(1);
+      }
+
+      40% {
+        filter: brightness(1.6);
+      }
+
+      100% {
+        filter: brightness(1);
+      }
     }
 
     .shortcut {
-      background: #374151;
+      background:
+        linear-gradient(
+          180deg,
+          #475569,
+          #334155
+        );
+
       padding: 5px 6px;
-      min-width: 30px;
-      max-width: 60px;
+
+      min-width: 32px;
+      max-width: 62px;
+
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
+
       font-size: 9px;
     }
 
     .edit {
-      background: #374151;
+      background:
+        linear-gradient(
+          180deg,
+          #475569,
+          #334155
+        );
+
       padding: 5px;
       font-size: 10px;
     }
 
     .delete {
-      background: #7f1d1d;
+      background:
+        linear-gradient(
+          180deg,
+          #b91c1c,
+          #7f1d1d
+        );
+
       padding: 5px;
       font-size: 10px;
     }
 
     .edit-area {
       display: none;
+
       grid-column: 1 / -1;
+
       gap: 3px;
+
+      margin-top: 2px;
     }
 
-    .sound.editing .edit-area {
+    .sound.editing
+    .edit-area {
       display: flex;
     }
 
     .edit-area input {
       min-width: 0;
       flex: 1;
-      background: #111827;
-      border: 1px solid #4b5563;
+
+      background: #0b1020;
+
+      border:
+        1px solid #425071;
+
       color: white;
-      border-radius: 5px;
+
+      border-radius: 6px;
+
       padding: 5px;
+
       font-size: 10px;
+
+      outline: none;
+    }
+
+    .edit-area input:focus {
+      border-color:
+        var(--blue2);
+
+      box-shadow:
+        0 0 0 2px
+        rgba(96,165,250,.12);
     }
 
     .empty {
       text-align: center;
-      color: #9ca3af;
-      padding: 14px 5px;
+
+      color: var(--muted);
+
+      padding: 15px 5px;
+
       font-size: 10px;
     }
 
     footer {
+      position: relative;
+      z-index: 1;
+
       text-align: center;
-      color: #6b7280;
+
+      color: #64748b;
+
       font-size: 8px;
+
       margin-top: 5px;
+    }
+
+    .particle {
+      position: fixed;
+
+      width: 5px;
+      height: 5px;
+
+      border-radius: 50%;
+
+      background: #93c5fd;
+
+      pointer-events: none;
+
+      z-index: 99999;
+
+      animation:
+        particle .45s ease-out
+        forwards;
+    }
+
+    @keyframes particle {
+      0% {
+        transform:
+          translate(0, 0)
+          scale(1);
+
+        opacity: 1;
+      }
+
+      100% {
+        transform:
+          translate(
+            var(--dx),
+            var(--dy)
+          )
+          scale(.3);
+
+        opacity: 0;
+      }
+    }
+
+    .screen-flash {
+      position: fixed;
+
+      inset: 0;
+
+      background:
+        radial-gradient(
+          circle,
+          rgba(59,130,246,.08),
+          transparent 55%
+        );
+
+      pointer-events: none;
+
+      opacity: 0;
+
+      z-index: 9990;
+    }
+
+    .screen-flash.active {
+      animation:
+        screenFlash .22s ease;
+    }
+
+    @keyframes screenFlash {
+      0% {
+        opacity: 0;
+      }
+
+      35% {
+        opacity: 1;
+      }
+
+      100% {
+        opacity: 0;
+      }
     }
 
   </style>
@@ -216,20 +617,29 @@
 
 <body>
 
+<div
+  class="screen-flash"
+  id="screenFlash"
+></div>
+
 <div class="app">
 
   <header>
 
     <div>
-      <h1>🎵 Soundboard</h1>
+
+      <h1>
+        🎵 Soundboard
+      </h1>
 
       <div class="subtitle">
-        Compact • raccourcis
+        Compact • haptic • FX
       </div>
+
     </div>
 
     <button
-      class="add"
+      class="add fx-button"
       id="addButton"
     >
       ＋ Son
@@ -237,12 +647,14 @@
 
   </header>
 
+
   <div
     class="drop"
     id="dropZone"
   >
     🎵 Glisse un son ici ou clique
   </div>
+
 
   <input
     id="fileInput"
@@ -252,9 +664,12 @@
     hidden
   >
 
+
   <div class="controls">
 
-    <span>🔊</span>
+    <span>
+      🔊
+    </span>
 
     <input
       id="volume"
@@ -266,7 +681,7 @@
     >
 
     <button
-      class="stop"
+      class="stop fx-button"
       id="stopButton"
     >
       ■ Stop
@@ -274,10 +689,12 @@
 
   </div>
 
+
   <div
     class="sounds"
     id="sounds"
   ></div>
+
 
   <footer>
     Échap = arrêter
@@ -288,74 +705,335 @@
 
 <script>
 
-const DATABASE_NAME = "MiniSoundboard";
+const DATABASE_NAME =
+  "MiniSoundboard";
 
-const STORE_NAME = "sounds";
+const STORE_NAME =
+  "sounds";
 
 let database;
 
 let volume = 0.8;
 
-let playingSounds = new Set();
+let playingSounds =
+  new Set();
 
-let shortcutCapture = null;
+let shortcutCapture =
+  null;
+
+
+/* HAPTIC */
+
+function haptic(
+  pattern = 12
+) {
+
+  if (
+    "vibrate" in navigator
+  ) {
+
+    navigator.vibrate(
+      pattern
+    );
+
+  }
+
+}
+
+
+/* RIPPLE */
+
+function makeRipple(
+  button,
+  event
+) {
+
+  const rect =
+    button
+      .getBoundingClientRect();
+
+  const x =
+    event.clientX -
+    rect.left;
+
+  const y =
+    event.clientY -
+    rect.top;
+
+  button.style
+    .setProperty(
+      "--ripple-x",
+      x + "px"
+    );
+
+  button.style
+    .setProperty(
+      "--ripple-y",
+      y + "px"
+    );
+
+  button.classList
+    .remove(
+      "ripple"
+    );
+
+  void button.offsetWidth;
+
+  button.classList
+    .add(
+      "ripple"
+    );
+
+}
+
+
+/* BUTTON FEEL */
+
+document
+  .addEventListener(
+    "pointerdown",
+    (event) => {
+
+      const button =
+        event.target.closest(
+          "button"
+        );
+
+      if (!button) {
+        return;
+      }
+
+      haptic(10);
+
+      makeRipple(
+        button,
+        event
+      );
+
+      button.classList
+        .add(
+          "pressed"
+        );
+
+    }
+  );
+
+
+document
+  .addEventListener(
+    "pointerup",
+    (event) => {
+
+      const button =
+        event.target.closest(
+          "button"
+        );
+
+      if (!button) {
+        return;
+      }
+
+      button.classList
+        .remove(
+          "pressed"
+        );
+
+    }
+  );
+
+
+document
+  .addEventListener(
+    "pointercancel",
+    (event) => {
+
+      const button =
+        event.target.closest(
+          "button"
+        );
+
+      if (!button) {
+        return;
+      }
+
+      button.classList
+        .remove(
+          "pressed"
+        );
+
+    }
+  );
+
+
+/* SCREEN FLASH */
+
+function flashScreen() {
+
+  const flash =
+    document.getElementById(
+      "screenFlash"
+    );
+
+  flash.classList
+    .remove(
+      "active"
+    );
+
+  void flash.offsetWidth;
+
+  flash.classList
+    .add(
+      "active"
+    );
+
+}
+
+
+/* PARTICLES */
+
+function particlesFrom(
+  element
+) {
+
+  const rect =
+    element
+      .getBoundingClientRect();
+
+  const centerX =
+    rect.left +
+    rect.width / 2;
+
+  const centerY =
+    rect.top +
+    rect.height / 2;
+
+  for (
+    let i = 0;
+    i < 7;
+    i++
+  ) {
+
+    const particle =
+      document.createElement(
+        "div"
+      );
+
+    particle.className =
+      "particle";
+
+    particle.style.left =
+      centerX + "px";
+
+    particle.style.top =
+      centerY + "px";
+
+    const angle =
+      Math.random() *
+      Math.PI *
+      2;
+
+    const distance =
+      18 +
+      Math.random() *
+      24;
+
+    const dx =
+      Math.cos(angle) *
+      distance;
+
+    const dy =
+      Math.sin(angle) *
+      distance;
+
+    particle.style
+      .setProperty(
+        "--dx",
+        dx + "px"
+      );
+
+    particle.style
+      .setProperty(
+        "--dy",
+        dy + "px"
+      );
+
+    document.body
+      .appendChild(
+        particle
+      );
+
+    setTimeout(
+      () => {
+        particle.remove();
+      },
+      500
+    );
+
+  }
+
+}
 
 
 /* DATABASE */
 
 function openDatabase() {
 
-  return new Promise((resolve, reject) => {
+  return new Promise(
+    (resolve, reject) => {
 
-    const request =
-      indexedDB.open(
-        DATABASE_NAME,
-        2
-      );
-
-    request.onupgradeneeded =
-      function () {
-
-        const db =
-          request.result;
-
-        if (
-          !db.objectStoreNames
-            .contains(STORE_NAME)
-        ) {
-
-          db.createObjectStore(
-            STORE_NAME,
-            {
-              keyPath: "id",
-              autoIncrement: true
-            }
-          );
-
-        }
-
-      };
-
-    request.onsuccess =
-      function () {
-
-        database =
-          request.result;
-
-        resolve();
-
-      };
-
-    request.onerror =
-      function () {
-
-        reject(
-          request.error
+      const request =
+        indexedDB.open(
+          DATABASE_NAME,
+          2
         );
 
-      };
+      request.onupgradeneeded =
+        function() {
 
-  });
+          const db =
+            request.result;
+
+          if (
+            !db
+              .objectStoreNames
+              .contains(
+                STORE_NAME
+              )
+          ) {
+
+            db.createObjectStore(
+              STORE_NAME,
+              {
+                keyPath: "id",
+                autoIncrement: true
+              }
+            );
+
+          }
+
+        };
+
+      request.onsuccess =
+        function() {
+
+          database =
+            request.result;
+
+          resolve();
+
+        };
+
+      request.onerror =
+        function() {
+
+          reject(
+            request.error
+          );
+
+        };
+
+    }
+  );
 
 }
 
@@ -374,22 +1052,25 @@ function getSounds() {
         );
 
       const store =
-        transaction.objectStore(
-          STORE_NAME
-        );
+        transaction
+          .objectStore(
+            STORE_NAME
+          );
 
       const request =
         store.getAll();
 
       request.onsuccess =
-        () => resolve(
-          request.result
-        );
+        () =>
+          resolve(
+            request.result
+          );
 
       request.onerror =
-        () => reject(
-          request.error
-        );
+        () =>
+          reject(
+            request.error
+          );
 
     }
   );
@@ -399,7 +1080,9 @@ function getSounds() {
 
 /* SAVE */
 
-function saveSound(sound) {
+function saveSound(
+  sound
+) {
 
   return new Promise(
     (resolve, reject) => {
@@ -411,20 +1094,24 @@ function saveSound(sound) {
         );
 
       const store =
-        transaction.objectStore(
-          STORE_NAME
-        );
+        transaction
+          .objectStore(
+            STORE_NAME
+          );
 
       const request =
-        store.put(sound);
+        store.put(
+          sound
+        );
 
       request.onsuccess =
         resolve;
 
       request.onerror =
-        () => reject(
-          request.error
-        );
+        () =>
+          reject(
+            request.error
+          );
 
     }
   );
@@ -434,7 +1121,13 @@ function saveSound(sound) {
 
 /* DELETE */
 
-function deleteSound(id) {
+function deleteSound(
+  id
+) {
+
+  haptic(
+    [20, 25, 20]
+  );
 
   const transaction =
     database.transaction(
@@ -443,8 +1136,12 @@ function deleteSound(id) {
     );
 
   transaction
-    .objectStore(STORE_NAME)
-    .delete(id);
+    .objectStore(
+      STORE_NAME
+    )
+    .delete(
+      id
+    );
 
   setTimeout(
     renderSounds,
@@ -456,12 +1153,16 @@ function deleteSound(id) {
 
 /* SHORTCUT */
 
-function normalizeKey(event) {
+function normalizeKey(
+  event
+) {
 
   return {
 
     key:
-      event.key.toLowerCase(),
+      event
+        .key
+        .toLowerCase(),
 
     ctrl:
       event.ctrlKey,
@@ -480,7 +1181,9 @@ function normalizeKey(event) {
 }
 
 
-function shortcutText(shortcut) {
+function shortcutText(
+  shortcut
+) {
 
   if (!shortcut) {
     return "—";
@@ -488,47 +1191,69 @@ function shortcutText(shortcut) {
 
   const parts = [];
 
-  if (shortcut.ctrl) {
-    parts.push("Ctrl");
+  if (
+    shortcut.ctrl
+  ) {
+    parts.push(
+      "Ctrl"
+    );
   }
 
-  if (shortcut.alt) {
-    parts.push("Alt");
+  if (
+    shortcut.alt
+  ) {
+    parts.push(
+      "Alt"
+    );
   }
 
-  if (shortcut.shift) {
-    parts.push("Shift");
+  if (
+    shortcut.shift
+  ) {
+    parts.push(
+      "Shift"
+    );
   }
 
-  if (shortcut.meta) {
-    parts.push("⌘");
+  if (
+    shortcut.meta
+  ) {
+    parts.push(
+      "⌘"
+    );
   }
 
-  parts.push(shortcut.key);
+  parts.push(
+    shortcut.key
+  );
 
-  return parts.join("+");
+  return parts.join(
+    "+"
+  );
 
 }
 
 
-function sameShortcut(a, b) {
+function sameShortcut(
+  a,
+  b
+) {
 
-  if (!a || !b) {
+  if (
+    !a ||
+    !b
+  ) {
+
     return false;
+
   }
 
   return (
-
     a.key === b.key &&
-
     a.ctrl === b.ctrl &&
-
     a.alt === b.alt &&
-
     a.shift === b.shift &&
-
     a.meta === b.meta
-
   );
 
 }
@@ -536,7 +1261,46 @@ function sameShortcut(a, b) {
 
 /* PLAY */
 
-function playSound(sound) {
+function playSound(
+  sound,
+  button,
+  row
+) {
+
+  haptic(
+    [12, 15, 8]
+  );
+
+  flashScreen();
+
+  particlesFrom(
+    button
+  );
+
+  button.classList
+    .remove(
+      "flash"
+    );
+
+  void button.offsetWidth;
+
+  button.classList
+    .add(
+      "flash"
+    );
+
+  row.classList
+    .remove(
+      "playing"
+    );
+
+  void row.offsetWidth;
+
+  row.classList
+    .add(
+      "playing"
+    );
+
 
   const url =
     URL.createObjectURL(
@@ -544,7 +1308,9 @@ function playSound(sound) {
     );
 
   const audio =
-    new Audio(url);
+    new Audio(
+      url
+    );
 
   audio.volume =
     volume;
@@ -554,7 +1320,7 @@ function playSound(sound) {
   );
 
   audio.onended =
-    function () {
+    function() {
 
       playingSounds.delete(
         audio
@@ -563,6 +1329,11 @@ function playSound(sound) {
       URL.revokeObjectURL(
         url
       );
+
+      row.classList
+        .remove(
+          "playing"
+        );
 
     };
 
@@ -573,16 +1344,19 @@ function playSound(sound) {
 
 /* ADD FILES */
 
-async function addFiles(files) {
+async function addFiles(
+  files
+) {
 
   for (
     const file of files
   ) {
 
     if (
-      !file.type.startsWith(
-        "audio/"
-      )
+      !file.type
+        .startsWith(
+          "audio/"
+        )
     ) {
 
       continue;
@@ -595,20 +1369,24 @@ async function addFiles(files) {
         ""
       );
 
-    await saveSound({
+    await saveSound(
+      {
+        name:
+          name,
 
-      name:
-        name,
+        blob:
+          file,
 
-      blob:
-        file,
-
-      shortcut:
-        null
-
-    });
+        shortcut:
+          null
+      }
+    );
 
   }
+
+  haptic(
+    [15, 20, 15]
+  );
 
   renderSounds();
 
@@ -642,7 +1420,8 @@ async function renderSounds() {
   }
 
   for (
-    const sound of sounds
+    const sound
+    of sounds
   ) {
 
     const row =
@@ -654,8 +1433,6 @@ async function renderSounds() {
       "sound";
 
 
-    /* PLAY */
-
     const play =
       document.createElement(
         "button"
@@ -665,13 +1442,17 @@ async function renderSounds() {
       "play";
 
     play.textContent =
-      "▶ " + sound.name;
+      "▶ " +
+      sound.name;
 
     play.onclick =
-      () => playSound(sound);
+      () =>
+        playSound(
+          sound,
+          play,
+          row
+        );
 
-
-    /* SHORTCUT */
 
     const shortcut =
       document.createElement(
@@ -695,10 +1476,10 @@ async function renderSounds() {
         shortcut.textContent =
           "Appuie";
 
+        haptic(15);
+
       };
 
-
-    /* EDIT */
 
     const edit =
       document.createElement(
@@ -712,13 +1493,15 @@ async function renderSounds() {
       "✎";
 
     edit.onclick =
-      () =>
-        row.classList.toggle(
-          "editing"
-        );
+      () => {
 
+        row.classList
+          .toggle(
+            "editing"
+          );
 
-    /* DELETE */
+      };
+
 
     const remove =
       document.createElement(
@@ -737,8 +1520,6 @@ async function renderSounds() {
           sound.id
         );
 
-
-    /* EDIT AREA */
 
     const editArea =
       document.createElement(
@@ -773,12 +1554,15 @@ async function renderSounds() {
       async () => {
 
         sound.name =
-          nameInput.value.trim()
+          nameInput.value
+            .trim()
           || "Son";
 
         await saveSound(
           sound
         );
+
+        haptic(12);
 
         renderSounds();
 
@@ -808,22 +1592,25 @@ async function renderSounds() {
 }
 
 
-/* ADD BUTTON */
+/* ADD */
 
 document
   .getElementById(
     "addButton"
   )
   .onclick =
-  () =>
+  () => {
+
     document
       .getElementById(
         "fileInput"
       )
       .click();
 
+  };
 
-/* FILE INPUT */
+
+/* FILE */
 
 document
   .getElementById(
@@ -843,11 +1630,16 @@ document
     "volume"
   )
   .oninput =
-  e =>
+  e => {
+
     volume =
       Number(
         e.target.value
       );
+
+    haptic(4);
+
+  };
 
 
 /* STOP */
@@ -858,6 +1650,10 @@ document
   )
   .onclick =
   () => {
+
+    haptic(
+      [20, 30, 20]
+    );
 
     for (
       const audio
@@ -871,23 +1667,43 @@ document
 
     }
 
+    playingSounds.clear();
+
+    document
+      .querySelectorAll(
+        ".sound.playing"
+      )
+      .forEach(
+        row =>
+          row.classList
+            .remove(
+              "playing"
+            )
+      );
+
   };
 
 
-/* DRAG DROP */
+/* DRAG */
 
 const dropZone =
-  document.getElementById(
-    "dropZone"
-  );
+  document
+    .getElementById(
+      "dropZone"
+    );
 
 dropZone.onclick =
-  () =>
+  () => {
+
+    haptic(8);
+
     document
       .getElementById(
         "fileInput"
       )
       .click();
+
+  };
 
 
 dropZone.ondragover =
@@ -895,18 +1711,23 @@ dropZone.ondragover =
 
     e.preventDefault();
 
-    dropZone.classList.add(
-      "over"
-    );
+    dropZone.classList
+      .add(
+        "over"
+      );
 
   };
 
 
 dropZone.ondragleave =
-  () =>
-    dropZone.classList.remove(
-      "over"
-    );
+  () => {
+
+    dropZone.classList
+      .remove(
+        "over"
+      );
+
+  };
 
 
 dropZone.ondrop =
@@ -914,9 +1735,10 @@ dropZone.ondrop =
 
     e.preventDefault();
 
-    dropZone.classList.remove(
-      "over"
-    );
+    dropZone.classList
+      .remove(
+        "over"
+      );
 
     addFiles(
       e.dataTransfer.files
@@ -929,7 +1751,9 @@ dropZone.ondrop =
 
 document.addEventListener(
   "keydown",
-  async function(event) {
+  async function(
+    event
+  ) {
 
     if (
       event.key ===
@@ -948,7 +1772,8 @@ document.addEventListener(
 
 
     if (
-      shortcutCapture !== null
+      shortcutCapture !==
+      null
     ) {
 
       event.preventDefault();
@@ -974,6 +1799,10 @@ document.addEventListener(
           sound
         );
 
+        haptic(
+          [10, 15, 10]
+        );
+
       }
 
       shortcutCapture =
@@ -987,7 +1816,9 @@ document.addEventListener(
 
 
     const pressed =
-      normalizeKey(event);
+      normalizeKey(
+        event
+      );
 
     const sounds =
       await getSounds();
@@ -1005,7 +1836,42 @@ document.addEventListener(
 
       event.preventDefault();
 
-      playSound(sound);
+      const rows =
+        Array.from(
+          document
+            .querySelectorAll(
+              ".sound"
+            )
+        );
+
+      const index =
+        sounds.findIndex(
+          s =>
+            s.id ===
+            sound.id
+        );
+
+      const row =
+        rows[index];
+
+      const button =
+        row
+          ?.querySelector(
+            ".play"
+          );
+
+      if (
+        button &&
+        row
+      ) {
+
+        playSound(
+          sound,
+          button,
+          row
+        );
+
+      }
 
     }
 
@@ -1028,9 +1894,11 @@ if (
   in navigator
 ) {
 
-  navigator.serviceWorker.register(
-    "./sw.js"
-  );
+  navigator
+    .serviceWorker
+    .register(
+      "./sw.js"
+    );
 
 }
 
