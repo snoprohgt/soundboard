@@ -1261,38 +1261,41 @@ function sameShortcut(
 
 /* PLAY */
 
-function playSound(
-  sound,
-  button,
-  row
-) {
+function playSound(s,b,row){
+  haptic([12,15,8]);
+  flash();
+  particles(b);
 
-  haptic(
-    [12, 15, 8]
-  );
+  // Arrête tous les sons déjà en cours
+  for(const a of playingSounds){
+    a.pause();
+    a.currentTime=0;
+  }
+  playingSounds.clear();
 
-  flashScreen();
+  document.querySelectorAll(".sound.playing")
+    .forEach(r=>r.classList.remove("playing"));
 
-  particlesFrom(
-    button
-  );
+  b.classList.remove("flash");
+  void b.offsetWidth;
+  b.classList.add("flash");
 
-  button.classList
-    .remove(
-      "flash"
-    );
+  row.classList.add("playing");
 
-  void button.offsetWidth;
+  const u=URL.createObjectURL(s.blob);
+  const a=new Audio(u);
+  a.volume=volume;
 
-  button.classList
-    .add(
-      "flash"
-    );
+  playingSounds.add(a);
 
-  row.classList
-    .remove(
-      "playing"
-    );
+  a.onended=()=>{
+    playingSounds.delete(a);
+    URL.revokeObjectURL(u);
+    row.classList.remove("playing");
+  };
+
+  a.play();
+}
 
   void row.offsetWidth;
 
